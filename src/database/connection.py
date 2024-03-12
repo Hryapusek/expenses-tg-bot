@@ -1,12 +1,22 @@
 import psycopg2
 from singleton_decorator import singleton
 from configreader import ConfigReader
+import threading
 
 class DatabaseConnection:
+    """
+    Usage
+    -----
+    DatabaseConnection.connection()
+    """
+    connection_lock = threading.RLock()
+
     @staticmethod
     def connection():
         if not 'connection_obj' in DatabaseConnection.__dict__:
-            DatabaseConnection.reset_connection()
+            with DatabaseConnection.connection_lock:
+                if not 'connection_obj' in DatabaseConnection.__dict__:
+                    DatabaseConnection.reset_connection()
         return DatabaseConnection.connection_obj
 
     @staticmethod
