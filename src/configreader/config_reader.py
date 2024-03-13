@@ -22,4 +22,7 @@ class ConfigReader:
     @property
     def db_password(self):
         return self.yaml_config["database"]["password"]
-
+    
+    @property
+    def db_port(self):
+        return self.yaml_config["database"]["port"]
