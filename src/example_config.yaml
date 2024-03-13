@@ -1,0 +1,6 @@
+database:
+  host: "localhost"
+  dbname: "maindb"
+  user: "main_user"
+  password: "admin"
+  port: 64957
