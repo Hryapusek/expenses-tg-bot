@@ -1,6 +1,7 @@
+from __future__ import annotations
 
 class Person:
-    def __init__(self, id = 0, name = '', cathegory_ids = None, balance = 0) -> None:
+    def __init__(self, id: int = 0, name: str = '', cathegory_ids: list = None, balance: int = 0) -> None:
         if not cathegory_ids:
             cathegory_ids = []
         self.id = id
@@ -17,3 +18,9 @@ class Person:
             balance = data[3]
             )
         return person
+
+    def __eq__(self, other_person: Person) -> bool:
+        return (self.id == other_person.id
+                and self.name == other_person.name
+                and self.cathegory_ids == other_person.cathegory_ids
+                and self.balance == other_person.balance)
