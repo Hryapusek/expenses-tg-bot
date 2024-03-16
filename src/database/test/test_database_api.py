@@ -61,6 +61,45 @@ class DatabaseTest(unittest.TestCase):
         fetched_person: Person = DatabaseApi().get_person_by_id(person1.id)
         self.assertTrue(person1.balance - money_amount == fetched_person.balance)
 
+    def test_all_cathegories_select_1(self):
+        self.__truncate_tables()
+        person1 = Person(0, 'Amogus', [], 0)
+        DatabaseApi().add_person(person1)
+        cathegory = Cathegory(0, 0, DatabaseApi().get_expense_cathegory_type_id(),
+                              'example_cathegory_1', 1000, 0)
+        
+        cathegory.id = DatabaseApi().add_cathegory(cathegory)
+        fetched_cathegories = DatabaseApi().get_person_all_cathegories_by_id(0)
+        self.assertTrue(len(fetched_cathegories) == 1)
+        self.assertEqual(fetched_cathegories[0], cathegory)
+
+    def test_all_operations_select_1(self):
+        self.__truncate_tables()
+        person1 = Person(0, 'Amogus', [], 0)
+        DatabaseApi().add_person(person1)
+        cathegory = Cathegory(0, 0, DatabaseApi().get_expense_cathegory_type_id(),
+                              'example_cathegory_1', 1000, 0)
+        
+        cathegory.id = DatabaseApi().add_cathegory(cathegory)
+        operation1 = Operation(operation_type_id=DatabaseApi().get_expense_operation_type_id(),
+                              person_id=person1.id,
+                              cathegory_id=cathegory.id,
+                              money_amout=1000,
+                              comment='Amogus1')
+        operation1.id = DatabaseApi().add_operation(operation1)
+
+        operation2 = Operation(operation_type_id=DatabaseApi().get_expense_operation_type_id(),
+                              person_id=person1.id,
+                              cathegory_id=cathegory.id,
+                              money_amout=2000,
+                              comment='Amogus2')
+        operation2.id = DatabaseApi().add_operation(operation2)
+        
+        fetched_operations = DatabaseApi().get_person_all_operations_by_ids(0, cathegory.id)
+        self.assertTrue(len(fetched_operations) == 2)
+        self.assertEqual(fetched_operations[0], operation1)
+        self.assertEqual(fetched_operations[1], operation2)
+
 
     def __truncate_tables(self):
         DatabaseApi().truncate_table('operation')
