@@ -3,4 +3,4 @@ database:
   dbname: "maindb"
   user: "main_user"
   password: "admin"
-  port: 64957
+  port: 30042
