@@ -157,19 +157,32 @@ class DatabaseApi:
             # not the 'income' and 'expense'
             # Maybe this checking is too much need to think about it
             if operation.operation_type_id == self.get_income_operation_type_id():
-                cursor.execute('UPDATE cathegory SET current_money = current_money + %s '
-                                'WHERE id = %s', (operation.money_amout, operation.cathegory_id))
-                cursor.execute('UPDATE person SET balance = balance + %s '
-                                'WHERE id = %s', (operation.money_amout, operation.person_id))
-            
+                cursor.execute(
+                    "UPDATE cathegory SET current_money = current_money + %s "
+                    "WHERE id = %s",
+                    (operation.money_amout, operation.cathegory_id),
+                )
+                cursor.execute(
+                    "UPDATE person SET balance = balance + %s " "WHERE id = %s",
+                    (operation.money_amout, operation.person_id),
+                )
+
             elif operation.operation_type_id == self.get_expense_operation_type_id():
-                cursor.execute('UPDATE cathegory SET current_money = current_money - %s '
-                                'WHERE id = %s', (operation.money_amout, operation.cathegory_id))
-                cursor.execute('UPDATE person SET balance = balance - %s '
-                                'WHERE id = %s', (operation.money_amout, operation.person_id))
-                
+                cursor.execute(
+                    "UPDATE cathegory SET current_money = current_money - %s "
+                    "WHERE id = %s",
+                    (operation.money_amout, operation.cathegory_id),
+                )
+                cursor.execute(
+                    "UPDATE person SET balance = balance - %s " "WHERE id = %s",
+                    (operation.money_amout, operation.person_id),
+                )
+
             else:
-                logging.warning('Unknown operation type found in add_operation! Type id: %s', operation.operation_type_id)
+                logging.warning(
+                    "Unknown operation type found in add_operation! Type id: %s",
+                    operation.operation_type_id,
+                )
         return operation_id
 
     def truncate_table(self, table_name):
@@ -192,38 +205,50 @@ class DatabaseApi:
                 (cathegory_id, person_id),
             )
 
-    def get_person_all_operations_by_id(person_id: int):
-        pass
-
-    def get_person_all_cathegories_by_id(person_id: int):
-        pass
+    def get_person_all_cathegories_by_id(self, person_id: int):
+        conn = DatabaseConnection.connection()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM cathegory WHERE person_id = %s", (person_id,))
+            return [Cathegory.fromTuple(x) for x in cursor.fetchall()]
+        
+    def get_person_all_operations_by_ids(self, person_id: int, cathegory_id: int):
+        conn = DatabaseConnection.connection()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM operation WHERE person_id = %s AND cathegory_id = %s", (person_id, cathegory_id))
+            return [Operation.fromTuple(x) for x in cursor.fetchall()]
 
     def __get_cathegory_type_id(self, cathegory_type: str):
-        if not hasattr(self.__get_cathegory_type_id, 'type_id_dict'):
+        if not hasattr(self.__get_cathegory_type_id, "type_id_dict"):
             self.__cached_cathegory_type_id_dict = dict()
         if not cathegory_type in self.__cached_cathegory_type_id_dict:
             conn = DatabaseConnection.connection()
             with conn.cursor() as cursor:
                 cursor.execute(
-                    "SELECT id FROM cathegory_type WHERE type_name = %s", (cathegory_type,)
+                    "SELECT id FROM cathegory_type WHERE type_name = %s",
+                    (cathegory_type,),
                 )
                 result = cursor.fetchone()[0]
                 if result is None:
-                    raise psycopg2.ProgrammingError('Cathegory type "%s" was not found' % (cathegory_type,))
+                    raise psycopg2.ProgrammingError(
+                        'Cathegory type "%s" was not found' % (cathegory_type,)
+                    )
                 self.__cached_cathegory_type_id_dict[cathegory_type] = result
         return self.__cached_cathegory_type_id_dict[cathegory_type]
 
     def __get_operation_type_id(self, operation_type: str):
-        if not hasattr(self.__get_operation_type_id, 'type_id_dict'):
+        if not hasattr(self.__get_operation_type_id, "type_id_dict"):
             self.__cached_operation_type_id_dict = dict()
         if not operation_type in self.__cached_operation_type_id_dict:
             conn = DatabaseConnection.connection()
             with conn.cursor() as cursor:
                 cursor.execute(
-                    "SELECT id FROM operation_type WHERE type_name = %s", (operation_type,)
+                    "SELECT id FROM operation_type WHERE type_name = %s",
+                    (operation_type,),
                 )
                 result = cursor.fetchone()[0]
                 if result is None:
-                    raise psycopg2.ProgrammingError('Operation type "%s" was not found' % (operation_type,))
+                    raise psycopg2.ProgrammingError(
+                        'Operation type "%s" was not found' % (operation_type,)
+                    )
                 self.__cached_operation_type_id_dict[operation_type] = result
         return self.__cached_operation_type_id_dict[operation_type]
