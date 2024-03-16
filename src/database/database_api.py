@@ -200,9 +200,8 @@ class DatabaseApi:
 
     def __get_cathegory_type_id(self, cathegory_type: str):
         if not hasattr(self.__get_cathegory_type_id, 'type_id_dict'):
-            self.cached_cathegory_type_id_dict = dict()
-        cached_cathegory_type_id_dict = self.cached_cathegory_type_id_dict
-        if not cathegory_type in cached_cathegory_type_id_dict:
+            self.__cached_cathegory_type_id_dict = dict()
+        if not cathegory_type in self.__cached_cathegory_type_id_dict:
             conn = DatabaseConnection.connection()
             with conn.cursor() as cursor:
                 cursor.execute(
@@ -211,14 +210,13 @@ class DatabaseApi:
                 result = cursor.fetchone()[0]
                 if result is None:
                     raise psycopg2.ProgrammingError('Cathegory type "%s" was not found' % (cathegory_type,))
-                cached_cathegory_type_id_dict[cathegory_type] = result
-        return cached_cathegory_type_id_dict[cathegory_type]
+                self.__cached_cathegory_type_id_dict[cathegory_type] = result
+        return self.__cached_cathegory_type_id_dict[cathegory_type]
 
     def __get_operation_type_id(self, operation_type: str):
         if not hasattr(self.__get_operation_type_id, 'type_id_dict'):
-            self.cached_operation_type_id_dict = dict()
-        cached_operation_type_id_dict = self.cached_operation_type_id_dict
-        if not operation_type in cached_operation_type_id_dict:
+            self.__cached_operation_type_id_dict = dict()
+        if not operation_type in self.__cached_operation_type_id_dict:
             conn = DatabaseConnection.connection()
             with conn.cursor() as cursor:
                 cursor.execute(
@@ -227,5 +225,5 @@ class DatabaseApi:
                 result = cursor.fetchone()[0]
                 if result is None:
                     raise psycopg2.ProgrammingError('Operation type "%s" was not found' % (operation_type,))
-                cached_operation_type_id_dict[operation_type] = result
-        return cached_operation_type_id_dict[operation_type]
+                self.__cached_operation_type_id_dict[operation_type] = result
+        return self.__cached_operation_type_id_dict[operation_type]
