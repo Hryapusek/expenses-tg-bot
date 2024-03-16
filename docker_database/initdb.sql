@@ -21,8 +21,8 @@ INSERT INTO operation_type(type_name) VALUES ('expense'), ('income');
 
 CREATE TABLE cathegory (
   id BIGSERIAL PRIMARY KEY,
-  person_id BIGINT REFERENCES person(id),
-  cathegory_type_id BIGINT REFERENCES cathegory_type(id),
+  person_id BIGINT REFERENCES person(id) ON DELETE CASCADE,
+  cathegory_type_id BIGINT REFERENCES cathegory_type(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   money_limit BIGINT NOT NULL DEFAULT 0,
   current_money BIGINT NOT NULL DEFAULT 0
@@ -31,9 +31,9 @@ CREATE TABLE cathegory (
 CREATE TABLE operation (
   id BIGSERIAL PRIMARY KEY,
   date TIMESTAMP NOT NULL DEFAULT now(),
-  operation_type_id BIGINT REFERENCES operation_type(id),
-  person_id BIGINT REFERENCES person(id),
-  cathegory_id BIGINT REFERENCES cathegory(id),
+  operation_type_id BIGINT REFERENCES operation_type(id) ON DELETE CASCADE,
+  person_id BIGINT REFERENCES person(id) ON DELETE CASCADE,
+  cathegory_id BIGINT REFERENCES cathegory(id) ON DELETE CASCADE,
   money_amount BIGINT NOT NULL,
   commentary TEXT
 );
