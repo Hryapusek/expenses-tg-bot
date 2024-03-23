@@ -4,3 +4,6 @@ database:
   user: "main_user"
   password: "admin"
   port: 30042
+
+bot:
+  token: "hell naaahhhh"

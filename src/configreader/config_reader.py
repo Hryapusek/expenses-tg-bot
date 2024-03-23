@@ -26,3 +26,7 @@ class ConfigReader:
     @property
     def db_port(self):
         return self.yaml_config["database"]["port"]
+    
+    @property
+    def bot_token(self):
+        return self.yaml_config["bot"]["token"]
