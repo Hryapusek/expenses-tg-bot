@@ -3,6 +3,7 @@ from .connection import DatabaseConnection
 from .types.person import Person
 from .types.cathegory import Cathegory
 from .types.operation import Operation
+from functools import lru_cache
 import psycopg2
 import logging
 
@@ -17,14 +18,18 @@ class DatabaseApi:
             - OperationalError if connection establishing failed
         """
         conn = DatabaseConnection.connection()
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM person WHERE id = %s", (person_id,))
-            result = cursor.fetchone()
-            if result is None:
-                raise psycopg2.ProgrammingError(
-                    "Person with id %s was not found" % (person_id,)
-                )
-            return Person.fromTuple(result)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM person WHERE id = %s", (person_id,))
+                result = cursor.fetchone()
+                if result is None:
+                    raise psycopg2.ProgrammingError(
+                        "Person with id %s was not found" % (person_id,)
+                    )
+        finally:
+            conn.commit()
+            conn.close()
+        return Person.fromTuple(result)
 
     def add_person(self, person: Person):
         """
@@ -34,16 +39,24 @@ class DatabaseApi:
             - psycopg2.Error error while inserting person
         """
         conn = DatabaseConnection.connection()
-        with conn.cursor() as cursor:
-            cursor.execute(
-                "INSERT INTO person(id, name, cathegory_ids, balance) VALUES (%s, %s, %s, %s)",
-                (person.id, person.name, person.cathegory_ids, person.balance),
-            )
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO person(id, name, cathegory_ids, balance) VALUES (%s, %s, %s, %s)",
+                    (person.id, person.name, person.cathegory_ids, person.balance),
+                )
+        finally:
+            conn.commit()
+            conn.close()
 
     def remove_person_by_id(self, person_id):
         conn = DatabaseConnection.connection()
-        with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM person WHERE id = %s", (person_id,))
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM person WHERE id = %s", (person_id,))
+        finally:
+            conn.commit()
+            conn.close()
 
     def get_income_cathegory_type_id(self):
         """
@@ -93,24 +106,28 @@ class DatabaseApi:
             - psycopg2.Error for all other errors
         """
         conn = DatabaseConnection.connection()
-        with conn.cursor() as cursor:
-            cursor.execute(
-                "INSERT INTO cathegory(person_id, cathegory_type_id, name, money_limit, current_money) "
-                "VALUES(%s, %s, %s, %s, %s) RETURNING id",
-                (
-                    cathegory.person_id,
-                    cathegory.cathegory_type_id,
-                    cathegory.name,
-                    cathegory.money_limit,
-                    cathegory.current_money,
-                ),
-            )
-            inserted_cathegory_id = cursor.fetchone()[0]
-            cursor.execute(
-                "UPDATE person SET cathegory_ids = ARRAY_APPEND(cathegory_ids, %s) WHERE id = %s",
-                (inserted_cathegory_id, cathegory.person_id),
-            )
-            return inserted_cathegory_id
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO cathegory(person_id, cathegory_type_id, name, money_limit, current_money) "
+                    "VALUES(%s, %s, %s, %s, %s) RETURNING id",
+                    (
+                        cathegory.person_id,
+                        cathegory.cathegory_type_id,
+                        cathegory.name,
+                        cathegory.money_limit,
+                        cathegory.current_money,
+                    ),
+                )
+                inserted_cathegory_id = cursor.fetchone()[0]
+                cursor.execute(
+                    "UPDATE person SET cathegory_ids = ARRAY_APPEND(cathegory_ids, %s) WHERE id = %s",
+                    (inserted_cathegory_id, cathegory.person_id),
+                )
+        finally:
+            conn.commit()
+            conn.close()
+        return inserted_cathegory_id
 
     def get_cathegory_by_id(self, cathegory_id: int):
         """
@@ -121,14 +138,18 @@ class DatabaseApi:
             - psycopg2.Error for all other errors
         """
         conn = DatabaseConnection.connection()
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM cathegory WHERE id = %s", (cathegory_id,))
-            result = cursor.fetchone()
-            if result is None:
-                raise psycopg2.ProgrammingError(
-                    "Cathergory with id %s was not found" % (cathegory_id,)
-                )
-            return Cathegory.fromTuple(result)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM cathegory WHERE id = %s", (cathegory_id,))
+                result = cursor.fetchone()
+                if result is None:
+                    raise psycopg2.ProgrammingError(
+                        "Cathergory with id %s was not found" % (cathegory_id,)
+                    )
+        finally:
+            conn.commit()
+            conn.close()
+        return Cathegory.fromTuple(result)
 
     def add_operation(self, operation: Operation):
         """
@@ -138,89 +159,110 @@ class DatabaseApi:
             - psycopg2.Error for all other errors
         """
         conn = DatabaseConnection.connection()
-        with conn.cursor() as cursor:
-            cursor.execute(
-                "INSERT INTO operation(date, operation_type_id, person_id, cathegory_id, money_amount, commentary) "
-                "VALUES(%s, %s, %s, %s, %s, %s) RETURNING id",
-                (
-                    operation.date,
-                    operation.operation_type_id,
-                    operation.person_id,
-                    operation.cathegory_id,
-                    operation.money_amout,
-                    operation.comment,
-                ),
-            )
-            operation_id = cursor.fetchone()[0]
-            # TODO: Add checking if cathegory_type has same type as operation_type
-            # e.g. cathegory 'income' and operation 'income'
-            # not the 'income' and 'expense'
-            # Maybe this checking is too much need to think about it
-            if operation.operation_type_id == self.get_income_operation_type_id():
+        try:
+            with conn.cursor() as cursor:
                 cursor.execute(
-                    "UPDATE cathegory SET current_money = current_money + %s "
-                    "WHERE id = %s",
-                    (operation.money_amout, operation.cathegory_id),
+                    "INSERT INTO operation(date, operation_type_id, person_id, cathegory_id, money_amount, commentary) "
+                    "VALUES(%s, %s, %s, %s, %s, %s) RETURNING id",
+                    (
+                        operation.date,
+                        operation.operation_type_id,
+                        operation.person_id,
+                        operation.cathegory_id,
+                        operation.money_amout,
+                        operation.comment,
+                    ),
                 )
-                cursor.execute(
-                    "UPDATE person SET balance = balance + %s " "WHERE id = %s",
-                    (operation.money_amout, operation.person_id),
-                )
+                operation_id = cursor.fetchone()[0]
+                # TODO: Add checking if cathegory_type has same type as operation_type
+                # e.g. cathegory 'income' and operation 'income'
+                # not the 'income' and 'expense'
+                # Maybe this checking is too much need to think about it
+                if operation.operation_type_id == self.get_income_operation_type_id():
+                    cursor.execute(
+                        "UPDATE cathegory SET current_money = current_money + %s "
+                        "WHERE id = %s",
+                        (operation.money_amout, operation.cathegory_id),
+                    )
+                    cursor.execute(
+                        "UPDATE person SET balance = balance + %s " "WHERE id = %s",
+                        (operation.money_amout, operation.person_id),
+                    )
 
-            elif operation.operation_type_id == self.get_expense_operation_type_id():
-                cursor.execute(
-                    "UPDATE cathegory SET current_money = current_money - %s "
-                    "WHERE id = %s",
-                    (operation.money_amout, operation.cathegory_id),
-                )
-                cursor.execute(
-                    "UPDATE person SET balance = balance - %s " "WHERE id = %s",
-                    (operation.money_amout, operation.person_id),
-                )
+                elif operation.operation_type_id == self.get_expense_operation_type_id():
+                    cursor.execute(
+                        "UPDATE cathegory SET current_money = current_money - %s "
+                        "WHERE id = %s",
+                        (operation.money_amout, operation.cathegory_id),
+                    )
+                    cursor.execute(
+                        "UPDATE person SET balance = balance - %s " "WHERE id = %s",
+                        (operation.money_amout, operation.person_id),
+                    )
 
-            else:
-                logging.warning(
-                    "Unknown operation type found in add_operation! Type id: %s",
-                    operation.operation_type_id,
-                )
+                else:
+                    logging.warning(
+                        "Unknown operation type found in add_operation! Type id: %s",
+                        operation.operation_type_id,
+                    )
+        finally:
+            conn.commit()
+            conn.close()
         return operation_id
 
     def truncate_table(self, table_name):
         conn = DatabaseConnection.connection()
-        with conn.cursor() as cursor:
-            cursor.execute('TRUNCATE TABLE "%s" CASCADE' % (table_name,))
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute('TRUNCATE TABLE "%s" CASCADE' % (table_name,))
+        finally:
+            conn.commit()
+            conn.close()
 
     def remove_cathegory_by_id(self, cathegory_id):
         conn = DatabaseConnection.connection()
-        with conn.cursor() as cursor:
-            cursor.execute(
-                "DELETE FROM cathegory WHERE id = %s RETURNING person_id",
-                (cathegory_id,),
-            )
-            person_id = cursor.fetchone()[0]
-            cursor.execute(
-                "UPDATE person SET cathegory_ids = "
-                "ARRAY_REMOVE(cathegory_ids, %s) "
-                "WHERE id = %s",
-                (cathegory_id, person_id),
-            )
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM cathegory WHERE id = %s RETURNING person_id",
+                    (cathegory_id,),
+                )
+                person_id = cursor.fetchone()[0]
+                cursor.execute(
+                    "UPDATE person SET cathegory_ids = "
+                    "ARRAY_REMOVE(cathegory_ids, %s) "
+                    "WHERE id = %s",
+                    (cathegory_id, person_id),
+                )
+        finally:
+            conn.commit()
+            conn.close()
 
     def get_person_all_cathegories_by_id(self, person_id: int):
         conn = DatabaseConnection.connection()
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM cathegory WHERE person_id = %s", (person_id,))
-            return [Cathegory.fromTuple(x) for x in cursor.fetchall()]
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM cathegory WHERE person_id = %s", (person_id,))
+                result = [Cathegory.fromTuple(x) for x in cursor.fetchall()]
+        finally:
+            conn.commit()
+            conn.close()
+        return result
         
     def get_person_all_operations_by_ids(self, person_id: int, cathegory_id: int):
         conn = DatabaseConnection.connection()
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM operation WHERE person_id = %s AND cathegory_id = %s", (person_id, cathegory_id))
-            return [Operation.fromTuple(x) for x in cursor.fetchall()]
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM operation WHERE person_id = %s AND cathegory_id = %s", (person_id, cathegory_id))
+                result = [Operation.fromTuple(x) for x in cursor.fetchall()]
+        finally:
+            conn.commit()
+            conn.close()
+        return result
 
+    @lru_cache
     def __get_cathegory_type_id(self, cathegory_type: str):
-        if not hasattr(self.__get_cathegory_type_id, "type_id_dict"):
-            self.__cached_cathegory_type_id_dict = dict()
-        if not cathegory_type in self.__cached_cathegory_type_id_dict:
+        try:
             conn = DatabaseConnection.connection()
             with conn.cursor() as cursor:
                 cursor.execute(
@@ -232,14 +274,15 @@ class DatabaseApi:
                     raise psycopg2.ProgrammingError(
                         'Cathegory type "%s" was not found' % (cathegory_type,)
                     )
-                self.__cached_cathegory_type_id_dict[cathegory_type] = result
-        return self.__cached_cathegory_type_id_dict[cathegory_type]
+        finally:
+            conn.commit()
+            conn.close()
+        return result
 
+    @lru_cache
     def __get_operation_type_id(self, operation_type: str):
-        if not hasattr(self.__get_operation_type_id, "type_id_dict"):
-            self.__cached_operation_type_id_dict = dict()
-        if not operation_type in self.__cached_operation_type_id_dict:
-            conn = DatabaseConnection.connection()
+        conn = DatabaseConnection.connection()
+        try:
             with conn.cursor() as cursor:
                 cursor.execute(
                     "SELECT id FROM operation_type WHERE type_name = %s",
@@ -250,5 +293,7 @@ class DatabaseApi:
                     raise psycopg2.ProgrammingError(
                         'Operation type "%s" was not found' % (operation_type,)
                     )
-                self.__cached_operation_type_id_dict[operation_type] = result
-        return self.__cached_operation_type_id_dict[operation_type]
+        finally:
+            conn.commit()
+            conn.close()
+        return result
