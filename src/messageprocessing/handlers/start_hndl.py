@@ -5,6 +5,8 @@ from database.api import DatabaseApi
 from psycopg2 import ProgrammingError
 from .main_menu_hndl import MainMenuHandler
 from ..botstate import BotState
+from .create_user_hndl import CreateUserHandler
+import logging
 
 
 class StartHandler(BaseHandler):
@@ -23,13 +25,18 @@ class StartHandler(BaseHandler):
             
             try:
                 DatabaseApi().get_person_by_id(message.from_user.id)
+                logging.info(f"User with id {message.from_user.id} was found in database. Next handler is unknown")
                 return MainMenuHandler.switch_to_this_handler(message)
+
             except ProgrammingError:
-                # TODO: switch to create user handler
-                pass
-            except Exception:
+                logging.info(f"User with id {message.from_user.id} was NOT found in database. CreateUerHandler is the next")
+                return CreateUserHandler.switch_to_this_handler(message)
+
+            except Exception as e:
+                logging.error("Exception while handling message in StartHandler. Exception: ", exc_info=e)
+                BotState().bot.send_message(message.chat.id, "Внутренняя ошибка")
+                return self
                 # TODO: send internal error message and log this error
-                pass
         
         BotState().bot.send_message(message.chat.id, self.hello_message, reply_markup=self.markup)
         return self

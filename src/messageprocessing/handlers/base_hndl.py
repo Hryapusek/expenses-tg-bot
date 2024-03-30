@@ -8,7 +8,7 @@ class BaseHandler(ABC):
         pass
     
     @abstractmethod
-    def handle_message(self, message):
+    def handle_message(self, message) -> BaseHandler:
         pass
 
     @staticmethod
