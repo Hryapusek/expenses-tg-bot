@@ -1,5 +1,5 @@
 from messageprocessing.handlers.base_hndl import BaseHandler
-from telebot.types import Message
+from telebot.types import Message, ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton
 from ..botstate import BotState
 from .base_inner_hndl import BaseInnerHandler
 from database.api import DatabaseApi
@@ -43,13 +43,11 @@ class _StartCreatingUserHandler(BaseInnerHandler):
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler: CreateUserHandler):
         BotState().bot.send_message(
-            message.chat.id, _StartCreatingUserHandler.GREETING_MESSAGE
+            message.chat.id, _StartCreatingUserHandler.GREETING_MESSAGE, reply_markup = ReplyKeyboardRemove()
         )
 
         # Here instantly swithing to another handler
         return _GetUserNameHandler.switch_to_this_handler(message, outter_handler)
-
-    pass
 
 
 class _GetUserNameHandler(BaseInnerHandler):
@@ -69,10 +67,11 @@ class _GetUserNameHandler(BaseInnerHandler):
 
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler: CreateUserHandler):
-        BotState().bot.send_message(message.chat.id, __class__.INVITE_MESSAGE)
+        markup = ReplyKeyboardMarkup(resize_keyboard=True)
+        item1 = KeyboardButton(message.from_user.username)
+        markup.add(item1)
+        BotState().bot.send_message(message.chat.id, __class__.INVITE_MESSAGE, reply_markup=markup)
         return _GetUserNameHandler(outter_handler)
-
-    pass
 
 
 class _GetUserBalanceHandler(BaseInnerHandler):
@@ -98,10 +97,11 @@ class _GetUserBalanceHandler(BaseInnerHandler):
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler: CreateUserHandler):
         # TODO: send message that invites to write balance
-        BotState().bot.send_message(message.chat.id, __class__.INVITE_MESSAGE)
+        markup = ReplyKeyboardMarkup(resize_keyboard=True)
+        for button1, button2 in [("0", "10000"), ("20000", "30000"), ("40000", "50000")]:
+            markup.add(button1, button2)
+        BotState().bot.send_message(message.chat.id, __class__.INVITE_MESSAGE, reply_markup = markup)
         return _GetUserBalanceHandler(outter_handler)
-
-    pass
 
 
 class _RegisterUserHandler(BaseInnerHandler):
@@ -111,11 +111,12 @@ class _RegisterUserHandler(BaseInnerHandler):
 
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler: CreateUserHandler):
-        # TODO: send message that invites to write balance
         person = Person(
+            id=message.from_user.id,
             name=outter_handler.new_person.name,
             balance=outter_handler.new_person.balance,
         )
         DatabaseApi().add_person(person)
-        BotState().bot.send_message(message.chat.id, "С регистрацией успешно завершили. Предлагаю теперь настроить категории.")
+        BotState().bot.send_message(message.chat.id, "С регистрацией успешно завершили. Предлагаю теперь настроить категории.", 
+                                    reply_markup = ReplyKeyboardRemove())
         return None # TODO: change me
