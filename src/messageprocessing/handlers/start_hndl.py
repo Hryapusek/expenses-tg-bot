@@ -10,10 +10,10 @@ import logging
 
 
 class StartHandler(BaseHandler):
-    hello_message = ("Hello my friend! I am the bot created to "
-                     "help people with their money handling. "
-                     "Click the button or type \"let's go\" to "
-                     "start configuring your profie.")
+    hello_message = ("Привет мой друг! Я бот созданный для "
+                     "того чтобы помогать людям с их финансами. "
+                     "Нажмите на кнопку или напишите \"вперед\" "
+                     "чтобы перейти к настройке профиля.")
 
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add(telebot.types.KeyboardButton("let's go"))
