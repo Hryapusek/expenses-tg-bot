@@ -238,7 +238,7 @@ class DatabaseApi:
             conn.commit()
             conn.close()
 
-    def get_person_all_cathegories_by_id(self, person_id: int):
+    def get_person_all_cathegories_by_id(self, person_id: int) -> list[Cathegory]:
         conn = DatabaseConnection.connection()
         try:
             with conn.cursor() as cursor:
@@ -249,7 +249,7 @@ class DatabaseApi:
             conn.close()
         return result
         
-    def get_person_all_operations_by_ids(self, person_id: int, cathegory_id: int):
+    def get_person_all_operations_by_ids(self, person_id: int, cathegory_id: int) -> list[Operation]:
         conn = DatabaseConnection.connection()
         try:
             with conn.cursor() as cursor:
