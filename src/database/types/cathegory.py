@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 class Cathegory:
-    def __init__(self, id: int, person_id: int, cathegory_type_id: int, 
-                 name: str, money_limit: int, current_money: int) -> None:
+    def __init__(self, id: int = 0, person_id: int = 0, cathegory_type_id: int = 0, 
+                 name: str = '', money_limit: int = 0, current_money: int = 0) -> None:
         self.id = id
         self.person_id = person_id
         self.cathegory_type_id = cathegory_type_id
