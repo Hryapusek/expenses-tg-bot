@@ -5,6 +5,7 @@ from telebot.types import Message
 
 class BaseInnerHandler(BaseHandler):
     def __init__(self, outter_handler: BaseHandler) -> None:
+        BaseHandler.__init__(self)
         self.outter_handler = outter_handler
 
     @staticmethod
