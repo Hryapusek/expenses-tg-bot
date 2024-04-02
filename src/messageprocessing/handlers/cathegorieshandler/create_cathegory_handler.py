@@ -1,3 +1,4 @@
+import logging
 from messageprocessing.handlers.base_hndl import BaseHandler, ReusableHandler
 from telebot.types import Message, ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton
 from ...botstate import BotState
@@ -15,7 +16,7 @@ class CreateCathegoryHandler(BaseInnerHandler):
     def switch_to_this_handler(message: Message, outter_handler) -> BaseHandler:
         cathegory = Cathegory()
         cathegory.person_id = message.from_user.id
-        return _ChooseCathegoryTypeHandler.switch_to_this_handler(outter_handler, Cathegory())
+        return _ChooseCathegoryTypeHandler.switch_to_this_handler(message, outter_handler, cathegory)
 
 class _ChooseCathegoryTypeHandler(BaseInnerHandler):
     CHOOSE_TYPE_MESSAGE = ("Выберите тип категории:\n"
@@ -23,9 +24,12 @@ class _ChooseCathegoryTypeHandler(BaseInnerHandler):
                            "- Расходы\n")
 
     MARKUP = ReplyKeyboardMarkup()
-    EXPENSE_BUTTON_NAME = "Расходы"
+    EXPENSE_CATHEGORY_BUTTON_NAME = "Расходы"
     INCOME_CATHEGORY_BUTTON_NAME = "Доходы"
     CANCEL_CATHEGORY_BUTTON_NAME = "Отменить"
+    MARKUP.add(EXPENSE_CATHEGORY_BUTTON_NAME)
+    MARKUP.add(INCOME_CATHEGORY_BUTTON_NAME)
+    MARKUP.add(CANCEL_CATHEGORY_BUTTON_NAME)
 
     def __init__(self, outter_handler: BaseHandler, cathegory: Cathegory) -> None:
         super().__init__(outter_handler)
@@ -35,7 +39,7 @@ class _ChooseCathegoryTypeHandler(BaseInnerHandler):
         if not message.text:
             BotState().bot.send_message(__class__.CHOOSE_TYPE_MESSAGE, reply_markup=__class__.MARKUP)    
             return self
-        if message.text == __class__.EXPENSE_BUTTON_NAME:
+        if message.text == __class__.EXPENSE_CATHEGORY_BUTTON_NAME:
             self.cathegory.cathegory_type_id = DatabaseApi().get_expense_cathegory_type_id()
             return _ChooseCathegoryNameHandler.switch_to_this_handler(message, self.outter_handler, self.cathegory)
         elif message.text == __class__.INCOME_CATHEGORY_BUTTON_NAME:
@@ -47,12 +51,12 @@ class _ChooseCathegoryTypeHandler(BaseInnerHandler):
 
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler, cathegory: Cathegory):
-        BotState().bot.send_message(message.chat.id, __class__.CHOOSE_OPTION_MESSAGE, reply_markup=__class__.MARKUP)
+        BotState().bot.send_message(message.chat.id, __class__.CHOOSE_TYPE_MESSAGE, reply_markup=__class__.MARKUP)
         return __class__(outter_handler, cathegory)
 
 
 class _ChooseCathegoryNameHandler(BaseInnerHandler):
-    CHOOSE_NAME_MESSAGE = ("Введите название категории")
+    CHOOSE_NAME_MESSAGE = "Введите название категории"
     NAME_TOO_SHORT_MESSAGE = "Имя должно содержать минимум один символ"
 
     MARKUP = ReplyKeyboardRemove()
@@ -74,11 +78,11 @@ class _ChooseCathegoryNameHandler(BaseInnerHandler):
 
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler, cathegory: Cathegory):
-        BotState().bot.send_message(message.chat.id, __class__.CHOOSE_OPTION_MESSAGE, reply_markup=__class__.MARKUP)
+        BotState().bot.send_message(message.chat.id, __class__.CHOOSE_NAME_MESSAGE, reply_markup=__class__.MARKUP)
         return __class__(outter_handler, cathegory)
     
 class _CathegoryMoneyLimitHandler(BaseInnerHandler):
-    CHOOSE_NAME_MESSAGE = "Введите желаемое ограничение по сумме для данной категории"
+    CHOOSE_LIMIT_MESSAGE = "Введите желаемое ограничение по сумме для данной категории"
     BAD_LIMIT_MESSAGE = "Введено некорректное значение. Попробуйте снова"
 
     MARKUP = ReplyKeyboardMarkup()
@@ -92,7 +96,7 @@ class _CathegoryMoneyLimitHandler(BaseInnerHandler):
 
     def handle_message(self, message: Message):
         if not message.text:
-            BotState().bot.send_message(__class__.CHOOSE_NAME_MESSAGE, reply_markup=__class__.MARKUP)    
+            BotState().bot.send_message(__class__.CHOOSE_LIMIT_MESSAGE, reply_markup=__class__.MARKUP)    
             return self
         try:
             limit = int(message.text)
@@ -105,11 +109,11 @@ class _CathegoryMoneyLimitHandler(BaseInnerHandler):
 
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler, cathegory: Cathegory):
-        BotState().bot.send_message(message.chat.id, __class__.CHOOSE_NAME_MESSAGE, reply_markup=__class__.MARKUP)
+        BotState().bot.send_message(message.chat.id, __class__.CHOOSE_LIMIT_MESSAGE, reply_markup=__class__.MARKUP)
         return __class__(outter_handler, cathegory)
 
 class _CathegoryCurrentMoneyHandler(BaseInnerHandler):
-    CHOOSE_NAME_MESSAGE = "Введите текущие затраты по данной категории"
+    CHOOSE_EXPENSES_MESSAGE = "Введите текущие затраты по данной категории"
     BAD_LIMIT_MESSAGE = "Введено некорректное значение. Попробуйте снова"
 
     MARKUP = ReplyKeyboardMarkup()
@@ -123,7 +127,7 @@ class _CathegoryCurrentMoneyHandler(BaseInnerHandler):
 
     def handle_message(self, message: Message):
         if not message.text:
-            BotState().bot.send_message(__class__.CHOOSE_NAME_MESSAGE, reply_markup=__class__.MARKUP)    
+            BotState().bot.send_message(__class__.CHOOSE_EXPENSES_MESSAGE, reply_markup=__class__.MARKUP)    
             return self
         try:
             limit = int(message.text)
@@ -136,11 +140,11 @@ class _CathegoryCurrentMoneyHandler(BaseInnerHandler):
 
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler, cathegory: Cathegory):
-        BotState().bot.send_message(message.chat.id, __class__.CHOOSE_NAME_MESSAGE, reply_markup=__class__.MARKUP)
+        BotState().bot.send_message(message.chat.id, __class__.CHOOSE_EXPENSES_MESSAGE, reply_markup=__class__.MARKUP)
         return __class__(outter_handler, cathegory)
 
 class _RegisterCathegoryHandler(BaseInnerHandler):
-    CHOOSE_NAME_MESSAGE = "Категория успешно создана!"
+    SUCCESS_MESSAGE = "Категория успешно создана!"
 
     MARKUP = ReplyKeyboardRemove()
 
@@ -159,8 +163,9 @@ class _RegisterCathegoryHandler(BaseInnerHandler):
         try:
             cathegory.id = DatabaseApi().add_cathegory(cathegory)
             outter_handler.cathegories.append(cathegory)
-            BotState().bot.send_message(message.chat.id, __class__.CHOOSE_NAME_MESSAGE, reply_markup=__class__.MARKUP)
+            BotState().bot.send_message(message.chat.id, __class__.SUCCESS_MESSAGE, reply_markup=__class__.MARKUP)
             return outter_handler.switch_to_existing_handler(message)
         except Exception:
+            logging.error("Failed inserting cathegory in database")
             return __class__(outter_handler, cathegory)
 

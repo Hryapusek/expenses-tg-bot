@@ -79,10 +79,10 @@ class CathegoriesMainMenuHandler(ReusableHandler):
         expense_cathegories = filter(lambda x: x.cathegory_type_id == DatabaseApi().get_expense_cathegory_type_id(), 
                                     self.cathegories)
         start_number = 1
-        for cathegory_type_name, cathegory in (("Доходные категории", income_cathegories),
+        for cathegory_type_name, cathegories in (("Доходные категории", income_cathegories),
                                                ("Расходные категории", expense_cathegories)):
             result += cathegory_type_name + ":\n"
-            for seq_no, cathegory in enumerate(self.cathegories, start_number):
+            for seq_no, cathegory in enumerate(cathegories, start_number):
                 line = line_format.format(seq_no, cathegory.name, cathegory.current_money, cathegory.money_limit)
                 result += line + '\n'
                 start_number = seq_no
