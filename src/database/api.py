@@ -129,6 +129,35 @@ class DatabaseApi:
             conn.close()
         return inserted_cathegory_id
 
+    def update_cathegory(self, cathegory: Cathegory):
+        """
+        Raise
+        -----
+            - OperationalError if connection establishing failed
+            - psycopg2.Error for all other errors
+        """
+        conn = DatabaseConnection.connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE cathegory "
+                    "SET cathegory_type_id = %s, "
+                    "name = %s, "
+                    "money_limit = %s, "
+                    "current_money = %s "
+                    "WHERE person_id = %s",
+                    (
+                        cathegory.cathegory_type_id,
+                        cathegory.name,
+                        cathegory.money_limit,
+                        cathegory.current_money,
+                        cathegory.person_id,
+                    ),
+                )
+        finally:
+            conn.commit()
+            conn.close()
+
     def get_cathegory_by_id(self, cathegory_id: int):
         """
         Raise
