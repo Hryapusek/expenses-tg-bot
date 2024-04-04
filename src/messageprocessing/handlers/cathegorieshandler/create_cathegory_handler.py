@@ -7,6 +7,8 @@ from database.api import DatabaseApi
 from database.types.person import Person
 from database.types.cathegory import Cathegory
 
+# TODO: add cancel button everywhere
+
 class CreateCathegoryHandler(BaseInnerHandler):
 
     def handle_message(self, message: Message):
@@ -37,7 +39,7 @@ class _ChooseCathegoryTypeHandler(BaseInnerHandler):
 
     def handle_message(self, message: Message):
         if not message.text:
-            BotState().bot.send_message(__class__.CHOOSE_TYPE_MESSAGE, reply_markup=__class__.MARKUP)    
+            BotState().bot.send_message(message.chat.id, __class__.CHOOSE_TYPE_MESSAGE, reply_markup=__class__.MARKUP)    
             return self
         if message.text == __class__.EXPENSE_CATHEGORY_BUTTON_NAME:
             self.cathegory.cathegory_type_id = DatabaseApi().get_expense_cathegory_type_id()
@@ -45,8 +47,10 @@ class _ChooseCathegoryTypeHandler(BaseInnerHandler):
         elif message.text == __class__.INCOME_CATHEGORY_BUTTON_NAME:
             self.cathegory.cathegory_type_id = DatabaseApi().get_income_cathegory_type_id()
             return _ChooseCathegoryNameHandler.switch_to_this_handler(message, self.outter_handler, self.cathegory)
+        elif message.text == __class__.CANCEL_CATHEGORY_BUTTON_NAME:
+            return self.switch_to_existing_handler(message)
         else:
-            BotState().bot.send_message(__class__.CHOOSE_TYPE_MESSAGE, reply_markup=__class__.MARKUP)    
+            BotState().bot.send_message(message.chat.id, __class__.CHOOSE_TYPE_MESSAGE, reply_markup=__class__.MARKUP)    
             return self
 
     @staticmethod
@@ -162,7 +166,10 @@ class _RegisterCathegoryHandler(BaseInnerHandler):
     def switch_to_this_handler(message: Message, outter_handler, cathegory: Cathegory):
         try:
             cathegory.id = DatabaseApi().add_cathegory(cathegory)
-            outter_handler.cathegories.append(cathegory)
+            if cathegory.cathegory_type_id == DatabaseApi().get_expense_cathegory_type_id():
+                outter_handler.expense_cathegories.append(cathegory)
+            else:
+                outter_handler.income_cathegories.append(cathegory)
             BotState().bot.send_message(message.chat.id, __class__.SUCCESS_MESSAGE, reply_markup=__class__.MARKUP)
             return outter_handler.switch_to_existing_handler(message)
         except Exception:
