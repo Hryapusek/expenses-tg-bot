@@ -7,6 +7,8 @@ from .option import Option
 
 class ChooseOptionHandler(ReturningResultHandler):
 
+    CANCEL_NAME = "Отмена"
+
     def __init__(self, outter_handler: ReusableHandler, asking_message: str, 
                  options: list[Option], markup) -> None:
         super().__init__(outter_handler)
@@ -17,6 +19,9 @@ class ChooseOptionHandler(ReturningResultHandler):
     def handle_message(self, message: Message) -> BaseHandler:
         if not message.text:
             return self
+        if message.text == __class__.CANCEL_NAME:
+            self.outter_handler.return_result = None
+            return self.outter_handler.switch_to_existing_handler(message)
         if not (message.text in self.options):
             BotState().bot.send_message(message.chat.id, self.asking_message, reply_markup=self.markup)
             return self
@@ -31,5 +36,6 @@ class ChooseOptionHandler(ReturningResultHandler):
         for option in options:
             asking_message += f"- {option}\n"
             markup.add(option) # TODO: finish this handler
+        markup.add(__class__.CANCEL_NAME)
         BotState().bot.send_message(message.chat.id, asking_message, reply_markup=markup)
         return ChooseOptionHandler(outter_handler, asking_message, options, markup)

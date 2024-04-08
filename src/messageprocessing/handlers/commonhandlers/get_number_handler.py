@@ -1,15 +1,16 @@
 from __future__ import annotations
 from ..base_inner_hndl import ReturningResultHandler, BaseHandler, ReusableHandler
-from telebot.types import Message, ReplyKeyboardRemove
+from telebot.types import Message, ReplyKeyboardMarkup
 from botstate import BotState
 
 
 class GetNumberHandler(ReturningResultHandler):
 
     BAD_NUMBER_MESSAGE = "Введено некорректное значение. Попробуйте снова"
+    CANCEL_NAME = "Отмена"
 
     def __init__(self, outter_handler: ReusableHandler, asking_message: str, 
-                 markup = ReplyKeyboardRemove(), pred = lambda x: (True, "")) -> None:
+                 markup = ReplyKeyboardMarkup(), pred = lambda x: (True, "")) -> None:
         super().__init__(outter_handler)
         self.asking_message = asking_message
         self.markup = markup
@@ -18,6 +19,9 @@ class GetNumberHandler(ReturningResultHandler):
     def handle_message(self, message: Message) -> BaseHandler:
         if not message.text:
             return self
+        if message.text == __class__.CANCEL_NAME:
+            self.outter_handler.return_result = None
+            return self.outter_handler.switch_to_existing_handler(message)
         try:
             value = int(message.text)
             result, err = self.pred(value)
@@ -33,7 +37,8 @@ class GetNumberHandler(ReturningResultHandler):
 
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler: ReusableHandler, 
-                               asking_message: str, markup = ReplyKeyboardRemove(), 
+                               asking_message: str, markup = ReplyKeyboardMarkup(), 
                                pred = lambda x: (True, "")) -> GetNumberHandler:
+        markup.add(__class__.CANCEL_NAME)
         BotState().bot.send_message(message.chat.id, asking_message, reply_markup=markup)
         return GetNumberHandler(outter_handler, asking_message, markup, pred)
