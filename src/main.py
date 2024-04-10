@@ -2,7 +2,6 @@ from logging_setup import logging_setup
 from configreader import ConfigReader
 import logging
 import telebot
-from telebot import types
 from messageprocessing.router.message_router import MessageRouter
 from messageprocessing.botstate import BotState
 
