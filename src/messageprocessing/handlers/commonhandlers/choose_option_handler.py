@@ -28,17 +28,26 @@ class ChooseOptionHandler(ReturningResultHandler):
         if not (message.text in self.options):
             BotState().bot.send_message(message.chat.id, self.asking_message, reply_markup=self.markup)
             return self
-        self.outter_handler.return_result = self.options.index(message.text)
+        index = self.options.index(message.text)
+        self.outter_handler.return_result = (index, self.options[index])
         return self.outter_handler.switch_to_existing_handler(message)
 
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler: ReusableHandler, 
-                               asking_message: str, options: list[Option], add_cancel = True) -> ChooseOptionHandler:
+                               asking_message: str, options: list[Option], add_cancel_option = True) -> ChooseOptionHandler:
+        """
+        return_result:
+            - (OptionIndex, Option)
+            - None if cancel_option choosed
+
+        """
         markup = ReplyKeyboardMarkup()
-        asking_message += '\n'
+        options_str = ""
         for option in options:
-            asking_message += f"- {option}\n"
+            options_str += f"- {option}\n"
             markup.add(option) # TODO: finish this handler
+        asking_message = options_str + '\n' + asking_message
+        
 
         BotState().bot.send_message(message.chat.id, asking_message, reply_markup=markup)
-        return ChooseOptionHandler(outter_handler, asking_message, options, markup, add_cancel)
+        return ChooseOptionHandler(outter_handler, asking_message, options, markup, add_cancel_option)
