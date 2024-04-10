@@ -7,3 +7,5 @@
     - ChangeCathegoryHandler
 
 ### DONE:
+- Change handlers to new style RetutningHandler
+    - ChooseCathegoryTypeHandler integrate with ChooseOptionHandler nikiforova 10 April 10:09
