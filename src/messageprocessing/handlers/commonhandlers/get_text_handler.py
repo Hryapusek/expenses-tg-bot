@@ -9,11 +9,11 @@ class GetTextHandler(ReturningResultHandler):
     CANCEL_NAME = "Отмена"
 
     def __init__(self, outter_handler: ReusableHandler, asking_message: str, 
-                 markup = ReplyKeyboardMarkup(), pred = lambda x: (True, "")) -> None:
+                 markup = ReplyKeyboardMarkup(), is_valid = lambda x: (True, "")) -> None:
         super().__init__(outter_handler)
         self.asking_message = asking_message
         self.markup = markup
-        self.pred = pred
+        self.is_valid = is_valid
 
     def handle_message(self, message: Message) -> BaseHandler:
         if not message.text:
@@ -21,8 +21,8 @@ class GetTextHandler(ReturningResultHandler):
         if message.text == __class__.CANCEL_NAME:
             self.outter_handler.return_result = None
             return self.outter_handler.switch_to_existing_handler(message)
-        result, err = self.pred(message.text)
-        if not result:
+        is_valid, err = self.is_valid(message.text)
+        if not is_valid:
             BotState().bot.send_message(message.chat.id, err, reply_markup=self.markup)
             BotState().bot.send_message(message.chat.id, self.asking_message, reply_markup=self.markup)
             return self
@@ -31,7 +31,9 @@ class GetTextHandler(ReturningResultHandler):
 
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler: ReusableHandler, 
-                               asking_message: str, markup = ReplyKeyboardMarkup(), 
-                               pred = lambda x: (True, "")) -> GetTextHandler:
+                               asking_message: str, markup = None, 
+                               is_valid = lambda x: (True, "")) -> GetTextHandler:
+        if not markup:
+            markup = ReplyKeyboardMarkup()
         BotState().bot.send_message(message.chat.id, asking_message, reply_markup=markup)
-        return GetTextHandler(outter_handler, asking_message, markup, pred)
+        return GetTextHandler(outter_handler, asking_message, markup, is_valid)
