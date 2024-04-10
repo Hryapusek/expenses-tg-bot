@@ -45,7 +45,7 @@ class CathegoriesMainMenuHandler(ReusableHandler):
         asking_message += cathegories_str + __class__.CHOOSE_OPTION_MESSAGE
         return ChooseOptionHandler.switch_to_this_handler(message, main_handler, 
                                                           asking_message, __class__.OPTIONS,
-                                                          add_cancel=False)
+                                                          add_cancel_option=False)
     
     def switch_to_existing_handler(self, message: Message):
         if self.state == __class__.OTHER_STATE:
@@ -62,7 +62,7 @@ class CathegoriesMainMenuHandler(ReusableHandler):
         try:
             return ChooseOptionHandler.switch_to_this_handler(message, self, 
                                                                 asking_message, __class__.OPTIONS,
-                                                                add_cancel=False)
+                                                                add_cancel_option=False)
         except:
             self.state = prev_state
             raise
