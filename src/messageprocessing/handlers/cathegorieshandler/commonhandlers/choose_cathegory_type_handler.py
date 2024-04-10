@@ -1,42 +1,57 @@
 from __future__ import annotations
 from database.api import DatabaseApi
-from handlers.base_inner_hndl import ReturningResultHandler, BaseHandler, ReusableHandler
-from telebot.types import Message, ReplyKeyboardMarkup
-from botstate import BotState
+from handlers.base_inner_hndl import ReturningResultHandler, ReusableHandler
+from telebot.types import Message
+from messageprocessing.handlers.base_hndl import BaseHandler
+from messageprocessing.handlers.commonhandlers.choose_option_handler import (
+    ChooseOptionHandler,
+)
+from messageprocessing.handlers.commonhandlers.option import Option
 
 
-class ChooseCathegoryTypeHandler(ReturningResultHandler):
+class ChooseCathegoryTypeHandler(ReturningResultHandler, ReusableHandler):
 
-    CHOOSE_TYPE_MESSAGE = ("Выберите тип категории:\n"
-                           "- Доходы\n"
-                           "- Расходы\n")
+    CHOOSE_TYPE_MESSAGE = "Выберите тип категории"
 
-    MARKUP = ReplyKeyboardMarkup()
-    EXPENSE_CATHEGORY_BUTTON_NAME = "Расходы"
-    INCOME_CATHEGORY_BUTTON_NAME = "Доходы"
-    CANCEL_CATHEGORY_BUTTON_NAME = "Отменить"
-    MARKUP.add(EXPENSE_CATHEGORY_BUTTON_NAME)
-    MARKUP.add(INCOME_CATHEGORY_BUTTON_NAME)
-    MARKUP.add(CANCEL_CATHEGORY_BUTTON_NAME)
+    EXPENSE_CATHEGORY_NAME = "Расходы"
+    INCOME_CATHEGORY_NAME = "Доходы"
 
-    def handle_message(self, message: Message):
-        if not message.text:
-            BotState().bot.send_message(message.chat.id, __class__.CHOOSE_TYPE_MESSAGE, reply_markup=__class__.MARKUP)    
-            return self
-        if message.text == __class__.EXPENSE_CATHEGORY_BUTTON_NAME:
-            self.outter_handler.return_result = DatabaseApi().get_expense_cathegory_type_id()
-            return self.outter_handler.switch_to_existing_handler(message)
-        elif message.text == __class__.INCOME_CATHEGORY_BUTTON_NAME:
-            self.outter_handler.return_result = DatabaseApi().get_income_cathegory_type_id()
-            return self.outter_handler.switch_to_existing_handler(message)
-        elif message.text == __class__.CANCEL_CATHEGORY_BUTTON_NAME:
-            self.outter_handler.return_result = None
-            return self.switch_to_existing_handler(message)
-        else:
-            BotState().bot.send_message(message.chat.id, __class__.CHOOSE_TYPE_MESSAGE, reply_markup=__class__.MARKUP)    
-            return self
+    def handle_message(self, message) -> BaseHandler:
+        return self
 
     @staticmethod
-    def switch_to_this_handler(message: Message, outter_handler: ReusableHandler) -> ChooseCathegoryTypeHandler:
-        BotState().bot.send_message(message.chat.id, reply_markup=__class__.NA)
-        return ChooseCathegoryTypeHandler(outter_handler)
+    def switch_to_this_handler(
+        message: Message, outter_handler: ReusableHandler
+    ) -> ChooseCathegoryTypeHandler:
+        """
+        return_result:
+            - cathegory_type_id
+            - None if cancel option choosed
+        """
+        options = [
+            Option(
+                __class__.EXPENSE_CATHEGORY_NAME,
+                DatabaseApi().get_expense_cathegory_type_id(),
+            ),
+            Option(
+                __class__.INCOME_CATHEGORY_NAME,
+                DatabaseApi().get_income_cathegory_type_id(),
+            ),
+        ]
+        this_handler = __class__(outter_handler)
+        return ChooseOptionHandler.switch_to_this_handler(
+            message,
+            this_handler,
+            __class__.CHOOSE_TYPE_MESSAGE,
+            options,
+            add_cancel_option=True,
+        )
+    
+    def switch_to_existing_handler(self, message: Message) -> ReusableHandler:
+        if self.return_result:
+            self.outter_handler.return_result = self.return_result.args[0]
+            return self.outter_handler.switch_to_existing_handler(message)
+        
+        self.outter_handler.return_result = None
+        return self.outter_handler.switch_to_existing_handler(message)
+
