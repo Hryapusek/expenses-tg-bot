@@ -1,7 +1,7 @@
 from messageprocessing.handlers.base_hndl import BaseHandler
 from telebot.types import Message, ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton
 
-from .cathegorieshandler.manage_cathegories_hndl import ManageCathegoriesHandler
+from .cathegorieshandler.manage_cathegories_hndl import CathegoriesMainMenuHandler
 from ..botstate import BotState
 from .base_inner_hndl import BaseInnerHandler
 from database.api import DatabaseApi
@@ -118,4 +118,4 @@ class _RegisterUserHandler(BaseHandler):
         DatabaseApi().add_person(person)
         BotState().bot.send_message(message.chat.id, "С регистрацией успешно завершили. Предлагаю теперь настроить категории.", 
                                     reply_markup = ReplyKeyboardRemove())
-        return ManageCathegoriesHandler.switch_to_this_handler(message)
+        return CathegoriesMainMenuHandler.switch_to_this_handler(message)
