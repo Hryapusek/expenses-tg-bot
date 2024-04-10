@@ -6,7 +6,7 @@ class BaseHandler(ABC):
     
     def __init__(self) -> None:
         pass
-    
+
     @abstractmethod
     def handle_message(self, message) -> BaseHandler:
         pass
