@@ -83,15 +83,10 @@ class ChangeCathegoryHandler(ReusableHandler, BaseInnerHandler):
         BotState().bot.send_message(message.chat.id, result_str, reply_markup=__class__.MARKUP)
 
     def got_name(self, message: Message):
-        
-        pass
+        if not self.return_result:
+            return self.outter_handler.switch_to_existing_handler(message)
+        self.cathegory.name = self.return_result
+        DatabaseApi().update_cathegory(self.cathegory)
+        self.show_cathegory(message)
+        return self
 
-
-def _generate_triples(last_number: int):
-    for i in range(1, (last_number)/3 + 1):
-        yield (str(i), str(i+1), str(i+2))
-    
-    if last_number % 3 == 1:
-        return (str(last_number), None, None)
-    elif last_number % 3 == 2:
-        return (str(last_number-1), str(last_number), None)
