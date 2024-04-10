@@ -68,14 +68,14 @@ class CathegoriesMainMenuHandler(ReusableHandler):
             raise
     
     def choosing_option_sh(self, message: Message):
-        if not message.text:
-            return self
+        assert self.return_result
+        option = self.return_result[1]
         try:
             prev_state = self.state
-            if message.text == __class__.CREATE_CATHEGORY_OPTION_NAME:
+            if option == __class__.CREATE_CATHEGORY_OPTION_NAME:
                 self.state = __class__.OTHER_STATE
                 return CreateCathegoryHandler.switch_to_this_handler(message, self)
-            elif message.text == __class__.CHANGE_CATHEGORY_OPTION_NAME:
+            elif option == __class__.CHANGE_CATHEGORY_OPTION_NAME:
                 self.state = __class__.OTHER_STATE
                 return ChangeCathegoryHandler.switch_to_this_handler(message, self)
         except:
