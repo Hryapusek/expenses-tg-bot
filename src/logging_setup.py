@@ -12,3 +12,4 @@ def logging_setup():
     formatter = logging.Formatter(logger_format)
     file_handler.setFormatter(formatter)
     root_logger.addHandler(file_handler)
+    logging.getLogger("requests").setLevel(logging.WARNING)
