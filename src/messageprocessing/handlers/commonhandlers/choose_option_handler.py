@@ -1,7 +1,7 @@
 from __future__ import annotations
-from ..base_inner_hndl import ReturningResultHandler, BaseHandler, ReusableHandler
+from ..base_inner_handler import ReturningResultHandler, BaseInnerHandler, ReusableHandler
 from telebot.types import Message, ReplyKeyboardMarkup
-from botstate import BotState
+from messageprocessing.botstate import BotState
 from .option import Option
 
 
@@ -19,7 +19,7 @@ class ChooseOptionHandler(ReturningResultHandler):
         if add_cancel:
             markup.add(__class__.CANCEL_NAME)
 
-    def handle_message(self, message: Message) -> BaseHandler:
+    def handle_message(self, message: Message) -> BaseInnerHandler:
         if not message.text:
             return self
         if self.add_cancel and message.text == __class__.CANCEL_NAME:
@@ -45,7 +45,7 @@ class ChooseOptionHandler(ReturningResultHandler):
         options_str = ""
         for option in options:
             options_str += f"- {option}\n"
-            markup.add(option) # TODO: finish this handler
+            markup.add(str(option))
         asking_message = options_str + '\n' + asking_message
         
 
