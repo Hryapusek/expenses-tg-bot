@@ -2,6 +2,8 @@
 - Low: ChooseCathegoryHandler make common
 - MainMenuHandler implementation
 - Operations implementations(Create procedures?)
+- ChooseCathegoryHandler make common
+    - ManageCathegoriesHandler.load_data_from_database make separate method to extract cathegories
 
 
 ### DONE:
