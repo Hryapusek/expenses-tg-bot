@@ -12,7 +12,7 @@ from telebot.types import (
 from messageprocessing.handlers.commonhandlers.get_number_handler import GetNumberHandler
 from messageprocessing.handlers.commonhandlers.get_text_handler import GetTextHandler
 
-from .cathegorieshandler.manage_cathegories_hndl import CathegoriesMainMenuHandler
+from .cathegorieshandler.manage_cathegories_handler import CathegoriesMainMenuHandler
 from ..botstate import BotState
 from .base_inner_handler import BaseInnerHandler
 from database.api import DatabaseApi
