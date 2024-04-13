@@ -1,8 +1,8 @@
 from __future__ import annotations
 from database.api import DatabaseApi
-from handlers.base_inner_hndl import ReturningResultHandler, ReusableHandler
+from messageprocessing.handlers.base_inner_handler import ReturningResultHandler, ReusableHandler
 from telebot.types import Message
-from messageprocessing.handlers.base_hndl import BaseHandler
+from messageprocessing.handlers.base_handler import BaseHandler
 from messageprocessing.handlers.commonhandlers.choose_option_handler import (
     ChooseOptionHandler,
 )
@@ -37,7 +37,7 @@ class ChooseCathegoryTypeHandler(ReturningResultHandler, ReusableHandler):
                 __class__.INCOME_CATHEGORY_NAME,
                 DatabaseApi().get_income_cathegory_type_id(),
             ),
-        ]
+        ] # It is important not to put "options" in body, because DatabaseApi may raise some shitty Exception YA KNOW DAT HUH??????
         this_handler = __class__(outter_handler)
         return ChooseOptionHandler.switch_to_this_handler(
             message,
@@ -48,8 +48,13 @@ class ChooseCathegoryTypeHandler(ReturningResultHandler, ReusableHandler):
         )
     
     def switch_to_existing_handler(self, message: Message) -> ReusableHandler:
+        """
+        return_result:
+            - None if canceled
+            - Cathegory type id otherwise
+        """
         if self.return_result:
-            self.outter_handler.return_result = self.return_result.args[0]
+            self.outter_handler.return_result = self.return_result[1].args[0]
             return self.outter_handler.switch_to_existing_handler(message)
         
         self.outter_handler.return_result = None
