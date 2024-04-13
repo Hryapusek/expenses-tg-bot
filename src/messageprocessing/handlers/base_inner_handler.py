@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .base_hndl import BaseHandler, ReusableHandler
+from .base_handler import BaseHandler, ReusableHandler
 from abc import ABC, abstractmethod
 from telebot.types import Message
 
