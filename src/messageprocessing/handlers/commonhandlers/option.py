@@ -4,7 +4,7 @@ class Option:
         self.args = args
     
     def __str__(self) -> str:
-        str(self.value)
+        return str(self.value)
     
     def __eq__(self, value: object) -> bool:
         return self.value == value
