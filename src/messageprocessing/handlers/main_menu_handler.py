@@ -1,4 +1,4 @@
-from messageprocessing.handlers.base_hndl import BaseHandler
+from messageprocessing.handlers.base_handler import BaseHandler
 from telebot.types import Message
 from ..botstate import BotState 
 
