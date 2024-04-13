@@ -40,12 +40,8 @@ class CreateCathegoryHandler(ReturningResultHandler, ReusableHandler):
         self.state = self.State.WAITING_FOR_TYPE
 
     def handle_message(self, message: Message):
-        assert self.state == __class__.State.REGISTERING_CATHEGORY
-        if not self.new_cathegory.id:
-            self.new_cathegory.id = DatabaseApi().add_cathegory(self.new_cathegory)
-        self.outter_handler.return_result = self.new_cathegory
-        BotState().bot.send_message(message.chat.id, "Категория успешно создана!")
-        return self.outter_handler.switch_to_existing_handler(message)
+        assert False, "Ahh hell naaahhh"
+        return self
 
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler) -> BaseInnerHandler:
@@ -99,17 +95,10 @@ class CreateCathegoryHandler(ReturningResultHandler, ReusableHandler):
             raise
     
     def __register_cathegory(self, message: Message) -> GetNumberHandler:
-        try:
+        if not self.new_cathegory.id:
             self.new_cathegory.id = DatabaseApi().add_cathegory(self.new_cathegory)
-            self.outter_handler.return_result = self.new_cathegory
-            BotState().bot.send_message(message.chat.id, "Категория успешно создана!")
-            return self.outter_handler.switch_to_existing_handler(message)
-        except:
-            try:
-                BotState().bot.send_message(message.chat.id, "Внутренняя ошибка")
-            except:
-                pass
-            return self
+        BotState().bot.send_message(message.chat.id, "Категория успешно создана!")
+        return self.outter_handler.switch_to_existing_handler(message)
 
     def switch_to_existing_handler(self, message: Message) -> ReusableHandler:
         if self.state == self.State.WAITING_FOR_TYPE:
