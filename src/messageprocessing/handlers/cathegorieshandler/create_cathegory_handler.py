@@ -1,6 +1,6 @@
 from enum import Enum
 import logging
-from messageprocessing.handlers.base_hndl import BaseHandler, ReusableHandler
+from messageprocessing.handlers.base_handler import BaseHandler, ReusableHandler
 from telebot.types import (
     Message,
     ReplyKeyboardRemove,
@@ -14,10 +14,12 @@ from messageprocessing.handlers.cathegorieshandler.commonhandlers.choose_cathego
 from messageprocessing.handlers.commonhandlers.get_number_handler import GetNumberHandler
 from messageprocessing.handlers.commonhandlers.get_text_handler import GetTextHandler
 from ...botstate import BotState
-from ..base_inner_hndl import BaseInnerHandler, ReturningResultHandler
+from ..base_inner_handler import BaseInnerHandler, ReturningResultHandler
 from database.api import DatabaseApi
 from database.types.person import Person
 from database.types.cathegory import Cathegory
+
+from .constrains import *
 
 # TODO: add cancel button everywhere
 
@@ -46,22 +48,12 @@ class CreateCathegoryHandler(ReturningResultHandler, ReusableHandler):
         return self.outter_handler.switch_to_existing_handler(message)
 
     @staticmethod
-    def switch_to_this_handler(message: Message, outter_handler) -> BaseHandler:
+    def switch_to_this_handler(message: Message, outter_handler) -> BaseInnerHandler:
         this_handler = __class__(outter_handler, message.from_user.id)
         return this_handler.__call_choose_type_handler(message)
 
     def __call_choose_type_handler(self, message) -> ChooseCathegoryTypeHandler:
         return ChooseCathegoryTypeHandler.switch_to_this_handler(message, self)
-
-    class GetName:
-        ASKING_MESSAGE = "Введите название категории"
-        ERROR_MESSAGE = "Имя не может быть пустым"
-
-        @staticmethod
-        def is_valid_name(name: str) -> tuple[bool, str]:
-            if len(name) == 0:
-                return (False, __class__.ERROR_MESSAGE)
-            return (True, "")
 
     def __call_enter_name_handler(self, message) -> GetTextHandler:
         prev_state = self.state
@@ -70,27 +62,12 @@ class CreateCathegoryHandler(ReturningResultHandler, ReusableHandler):
             return GetTextHandler.switch_to_this_handler(
                 message,
                 self,
-                __class__.GetName.ASKING_MESSAGE,
-                is_valid=__class__.GetName.is_valid_name,
+                GetNameConstrains.ASKING_MESSAGE,
+                is_valid=GetNameConstrains.is_valid_name,
             )
         except:
             self.state = prev_state
             raise
-    
-    class GetMoneyLimit:
-        ASKING_MESSAGE = "Введите желаемое ограничение по сумме для данной категории"
-        BAD_LIMIT_MESSAGE = "Введено некорректное значение. Попробуйте снова"
-
-        MARKUP = ReplyKeyboardMarkup()
-        MARKUP.add("0", "1000")
-        MARKUP.add("5000", "10000")
-        MARKUP.add("20000", "30000")
-
-        @staticmethod
-        def is_valid_money_limit(limit: str) -> tuple[bool, str]:
-            if limit <= 0:
-                return (False, __class__.BAD_LIMIT_MESSAGE)
-            return (True, "")
 
     def __call_enter_money_limit_handler(self, message) -> GetNumberHandler:
         prev_state = self.state
@@ -99,22 +76,13 @@ class CreateCathegoryHandler(ReturningResultHandler, ReusableHandler):
             return GetNumberHandler.switch_to_this_handler(
                 message,
                 self,
-                __class__.GetMoneyLimit.ASKING_MESSAGE,
-                __class__.GetMoneyLimit.MARKUP,
-                is_valid=__class__.GetMoneyLimit.is_valid_money_limit
+                GetMoneyLimitConstrains.ASKING_MESSAGE,
+                GetMoneyLimitConstrains.MARKUP,
+                is_valid=GetMoneyLimitConstrains.is_valid_money_limit
             )
         except:
             self.state = prev_state
             raise
-
-    class GetCurrentMoney:
-        ASKING_MESSAGE = "Введите текущие затраты/доходы по данной категории"
-        BAD_LIMIT_MESSAGE = "Введено некорректное значение. Попробуйте снова"
-
-        MARKUP = ReplyKeyboardMarkup()
-        MARKUP.add("0", "1000")
-        MARKUP.add("5000", "10000")
-        MARKUP.add("20000", "30000")
 
     def __call_enter_current_money_handler(self, message) -> GetNumberHandler:
         prev_state = self.state
@@ -123,8 +91,8 @@ class CreateCathegoryHandler(ReturningResultHandler, ReusableHandler):
             return GetNumberHandler.switch_to_this_handler(
                 message,
                 self,
-                __class__.GetMoneyLimit.ASKING_MESSAGE,
-                __class__.GetMoneyLimit.MARKUP,
+                GetCurrentMoneyConstrains.ASKING_MESSAGE,
+                GetCurrentMoneyConstrains.MARKUP,
             )
         except:
             self.state = prev_state
