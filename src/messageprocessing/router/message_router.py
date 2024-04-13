@@ -1,6 +1,6 @@
 from singleton_decorator import singleton
 from telebot.types import Message
-from ..handlers.start_hndl import StartHandler
+from ..handlers.start_handler import StartHandler
 from ..handlers.base_handler import BaseHandler
 from typing import Dict
 
