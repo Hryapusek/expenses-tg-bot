@@ -9,12 +9,15 @@ from messageprocessing.handlers.cathegorieshandler.change_cathegory_handler impo
 from messageprocessing.handlers.cathegorieshandler.create_cathegory_handler import (
     CreateCathegoryHandler,
 )
+from messageprocessing.handlers.cathegorieshandler.delete_cathegory_hanlder import (
+    DeleteCathegoryHandler,
+)
 from messageprocessing.handlers.commonhandlers.choose_option_handler import (
     ChooseOptionHandler,
 )
 from database.api import DatabaseApi
 from database.types.cathegory import Cathegory
-from .utils import cathegories_to_string
+from .utils import cathegories_to_string, load_person_cathegories
 
 
 class CathegoriesMainMenuHandler(ReusableHandler, BaseInnerHandler):
@@ -90,7 +93,9 @@ class CathegoriesMainMenuHandler(ReusableHandler, BaseInnerHandler):
         try:
             prev_state = self.state
             self.state = __class__.State.OTHER
-            assert False, "Implement me"
+            return DeleteCathegoryHandler.switch_to_this_handler(
+                message, self, self.income_cathegories, self.expense_cathegories
+            )
         except:
             self.state = prev_state
             raise
@@ -122,18 +127,6 @@ class CathegoriesMainMenuHandler(ReusableHandler, BaseInnerHandler):
         assert False, "This can not be reached. Incorrect option handling?"
 
     def load_data_from_database(self, message: Message):
-        self.cathegories = DatabaseApi().get_person_all_cathegories_by_id(
+        self.income_cathegories, self.expense_cathegories = load_person_cathegories(
             message.from_user.id
         )
-        self.income_cathegories = filter(
-            lambda x: x.cathegory_type_id
-            == DatabaseApi().get_income_cathegory_type_id(),
-            self.cathegories,
-        )
-        self.income_cathegories = list(self.income_cathegories)
-        self.expense_cathegories = filter(
-            lambda x: x.cathegory_type_id
-            == DatabaseApi().get_expense_cathegory_type_id(),
-            self.cathegories,
-        )
-        self.expense_cathegories = list(self.expense_cathegories)
