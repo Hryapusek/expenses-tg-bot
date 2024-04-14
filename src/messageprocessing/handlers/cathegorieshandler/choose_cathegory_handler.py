@@ -36,7 +36,7 @@ class ChooseCathegoryHandler(ReturningResultHandler, ReusableHandler):
             return self.outter_handler.switch_to_existing_handler(message)
         cathegory_number = self.return_result
         index = cathegory_number - 1 # Enumerations begins with one
-        if cathegory_number >= len(self.income_cathegories):
+        if index >= len(self.income_cathegories):
             index -= len(self.income_cathegories)
             cathegory = self.expense_cathegories[index]
             self.outter_handler.return_result = (cathegory, self.expense_cathegories, index)
