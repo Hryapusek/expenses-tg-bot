@@ -2,11 +2,12 @@
 - Low: ChooseCathegoryHandler make common
 - MainMenuHandler implementation
 - Operations implementations(Create procedures?)
-- ChooseCathegoryHandler make common
-    - ManageCathegoriesHandler.load_data_from_database make separate method to extract cathegories
 
 
 ### DONE:
+- ChooseCathegoryHandler make common 14-04 03:24
+    - ManageCathegoriesHandler.load_data_from_database make separate method to extract cathegories
+- DeleteCathegoryHandler implementation 14-04 03:23
 - Change handlers to new style RetutningHandler 13-04 23:27
     - ChooseCathegoryTypeHandler integrate with ChooseOptionHandler
 - CathegoriesMainMenuHandler 13-04 23:27
