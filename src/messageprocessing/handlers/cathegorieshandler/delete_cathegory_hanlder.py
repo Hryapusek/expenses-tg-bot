@@ -97,7 +97,7 @@ class DeleteCathegoryHandler(ReusableHandler, BaseInnerHandler):
             raise
 
     def got_confirmation_sh(self, message: Message):
-        choosed_option = self.return_result
+        choosed_option = self.return_result[1]
         if not choosed_option or choosed_option == __class__.ConfirmationConstrains.NO_OPTION:
             return self.__call_choose_cathegory_handler
         if choosed_option == __class__.ConfirmationConstrains.YES_OPTION:
