@@ -1,13 +1,12 @@
 from enum import Enum
 
 import telebot
+from messageprocessing.handlers.base_handler import BaseHandler
 from telebot.types import Message
 
 from src.database.types.cathegory import Cathegory
 from .base_inner_handler import BaseInnerHandler
-from .cathegorieshandler.change_cathegory_handler import ChangeCathegoryHandler
-from .cathegorieshandler.create_cathegory_handler import CreateCathegoryHandler
-from .cathegorieshandler.delete_cathegory_hanlder import DeleteCathegoryHandler
+from ..cathegorieshandler.manage_cathegories_hanlder import CathegoriesMainMenuHandler
 from .commonhandlers.choose_option_handler import ChooseOptionHandler
 from ..botstate import BotState
 
@@ -15,21 +14,18 @@ from ..botstate import BotState
 class MainMenuHandler(BaseInnerHandler):
     class State(Enum):
         WAITING_FOR_OPTION = 0
-        OTHER = 1
+        IN_CATHEGORIES_MAIN_MENU = 1
 
     class ChooseOptionConstrains:
         ASKING_MESSAGE = "Выберите действие"
 
         OPTIONS = [
-            CREATE_CATHEGORY_OPTION := "Создать категорию",
-            CHANGE_CATHEGORY_OPTION := "Изменить категорию",
-            DELETE_CATHEGORY_OPTION := "Удалить категорию"
+            CHECK_CATHEGORIES_OPTION := "Категории",
+            CHANGE_CATHEGORY_OPTION := "Операции",
         ]
 
     def __init__(self, outter_handler=None):
         BaseInnerHandler.__init__(self, None)
-        self.income_cathegories: list[Cathegory] = []
-        self.expense_cathegories: list[Cathegory] = []
         self.state = self.State.WAITING_FOR_OPTION
 
     MARKUP = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -37,10 +33,10 @@ class MainMenuHandler(BaseInnerHandler):
         MARKUP.add(i)
     GREETING_MESSAGE = "Что вы хотите сделать?"
 
-    def __call_create_cathegory_handler(self, message: Message):
+    def __call_manage_cathegories_handler(self, message: Message):
         try:
             prev_state = self.state
-            self.state = __class__.State.OTHER
+            self.state = __class__.State.State.IN_CATHEGORIES_MAIN_MENU
             return CreateCathegoryHandler.switch_to_this_handler(message, self)
         except:
             self.state = prev_state
@@ -79,6 +75,9 @@ class MainMenuHandler(BaseInnerHandler):
         except:
             self.state = prev_state
             raise
+
+    def __call_cathegories_handler(self, message):
+        
 
     def handle_message(self, message: Message):
         if message.text == self.ChooseOptionConstrains.CREATE_CATHEGORY_OPTION:
