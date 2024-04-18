@@ -76,23 +76,14 @@ class DatabaseApi:
         """
         return self.__get_cathegory_type_id("expense")
 
-    def get_income_operation_type_id(self):
+    def get_change_balance_operation_type_id(self):
         """
         Raise
         -----
             - OperationalError if connection establishing failed
             - psycopg2.Error for all other errors
         """
-        return self.__get_operation_type_id("income")
-
-    def get_expense_operation_type_id(self):
-        """
-        Raise
-        -----
-            - OperationalError if connection establishing failed
-            - psycopg2.Error for all other errors
-        """
-        return self.__get_operation_type_id("expense")
+        return self.__get_operation_type_id("change_balance")
 
     def add_cathegory(self, cathegory: Cathegory) -> int:
         """
@@ -213,10 +204,17 @@ class DatabaseApi:
                         "WHERE id = %s",
                         (operation.money_amout, operation.cathegory_id),
                     )
-                    cursor.execute(
-                        "UPDATE person SET balance = balance + %s " "WHERE id = %s",
-                        (operation.money_amout, operation.person_id),
-                    )
+                    cathegory = self.get_cathegory_by_id(operation.cathegory_id)
+                    if cathegory.cathegory_type_id == self.get_income_operation_type_id():
+                        cursor.execute(
+                            "UPDATE person SET balance = balance + %s " "WHERE id = %s",
+                            (operation.money_amout, operation.person_id),
+                        )
+                    else:
+                        cursor.execute(
+                            "UPDATE person SET balance = balance - %s " "WHERE id = %s",
+                            (operation.money_amout, operation.person_id),
+                        )
 
                 elif operation.operation_type_id == self.get_expense_operation_type_id():
                     cursor.execute(
@@ -224,10 +222,16 @@ class DatabaseApi:
                         "WHERE id = %s",
                         (operation.money_amout, operation.cathegory_id),
                     )
-                    cursor.execute(
-                        "UPDATE person SET balance = balance - %s " "WHERE id = %s",
-                        (operation.money_amout, operation.person_id),
-                    )
+                    if cathegory.cathegory_type_id == self.get_income_operation_type_id():
+                        cursor.execute(
+                            "UPDATE person SET balance = balance - %s " "WHERE id = %s",
+                            (operation.money_amout, operation.person_id),
+                        )
+                    else:
+                        cursor.execute(
+                            "UPDATE person SET balance = balance + %s " "WHERE id = %s",
+                            (operation.money_amout, operation.person_id),
+                        )
 
                 else:
                     logging.warning(
