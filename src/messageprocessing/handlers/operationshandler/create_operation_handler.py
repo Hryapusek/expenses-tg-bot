@@ -1,15 +1,20 @@
 from enum import Enum
 from messageprocessing.handlers.base_handler import *
-from telebot.types import Message
+from telebot.types import Message, ReplyKeyboardMarkup
 
 from messageprocessing.handlers.base_inner_handler import BaseInnerHandler
-from messageprocessing.handlers.cathegorieshandler.choose_cathegory_handler import ChooseCathegoryHandler
+from messageprocessing.handlers.cathegorieshandler.choose_cathegory_handler import (
+    ChooseCathegoryHandler,
+)
+from messageprocessing.handlers.cathegorieshandler.utils import load_person_cathegories
 from messageprocessing.handlers.commonhandlers.choose_option_handler import (
     ChooseOptionHandler,
 )
 from database.api import DatabaseApi
 from database.types.cathegory import Cathegory
 from database.types.operation import Operation
+from messageprocessing.handlers.commonhandlers.get_number_handler import GetNumberHandler
+from messageprocessing.handlers.commonhandlers.get_text_handler import GetTextHandler
 
 
 class CreateOperationHandler(ReusableHandler, BaseInnerHandler):
@@ -23,6 +28,7 @@ class CreateOperationHandler(ReusableHandler, BaseInnerHandler):
         BaseInnerHandler.__init__(self, outter_handler)
         self.operation = Operation()
         self.operation.person_id = person_id
+        self.operation.operation_type_id = DatabaseApi().get_change_balance_operation_type_id()
         self.state = __class__.State.WAITING_FOR_CATHEGORY
 
     def handle_message(self, message: Message):
@@ -39,38 +45,46 @@ class CreateOperationHandler(ReusableHandler, BaseInnerHandler):
             FINISH_OPTION := "Завершить",
         ]
 
-    def __call_choose_option_handler(self, message: Message):
+    def __call_choose_cathegory_handler(self, message) -> ChooseCathegoryHandler:
         try:
             prev_state = self.state
-            self.state = __class__.State.WAITING_FOR_OPTION
-            return ChooseOptionHandler.switch_to_this_handler(
-                message,
-                self,
-                __class__.ChooseOptionConstrains.ASKING_MESSAGE,
-                __class__.ChooseOptionConstrains.OPTIONS,
-                add_cancel_option=False,
+            self.state = __class__.State.WAITING_FOR_CATHEGORY
+
+            return ChooseCathegoryHandler.switch_to_this_handler(
+                message, self, *load_person_cathegories(message.from_user.id)
             )
         except:
             self.state = prev_state
             raise
 
-    def __call_choose_cathegory_handler(self, message) -> ChooseCathegoryHandler:
+    def __call_get_money_amount_handler(self, message: Message):
         try:
             prev_state = self.state
-            self.state = __class__.State.WAITING_FOR_CATHEGORY
-            return ChooseCathegoryHandler.switch_to_this_handler(
-            message, self, self.income_cathegories, self.expense_cathegories
-        )
+            self.state = __class__.State.WAITING_FOR_MONEY_AMOUNT
+            return GetNumberHandler.switch_to_this_handler(
+                message, self, "Введите сумму операции(значение может быть отрицательным)"
+            )
         except:
             self.state = prev_state
             raise
 
-    def __call_delete_cathegory_handler(self, message: Message):
+    class GetCommentConstrains:
+        ASKING_MESSAGE = "Введите комментарий к операции или напишите 'нет' для отмены операции"
+        EMPTY_COMMENT_OPTION = "нет"
+        MARKUP = ReplyKeyboardMarkup(
+            resize_keyboard=True,
+        )
+        MARKUP.add(EMPTY_COMMENT_OPTION)
+    
+    def __call_get_comment_handler(self, message: Message):
         try:
             prev_state = self.state
-            self.state = __class__.State.OTHER
-            return DeleteCathegoryHandler.switch_to_this_handler(
-                message, self, self.income_cathegories, self.expense_cathegories
+            self.state = __class__.State.WAITING_FOR_COMMENT
+            return GetTextHandler.switch_to_this_handler(
+                message,
+                self,
+                __class__.GetCommentConstrains.ASKING_MESSAGE,
+                reply_markup=__class__.GetCommentConstrains.MARKUP,
             )
         except:
             self.state = prev_state
@@ -82,27 +96,33 @@ class CreateOperationHandler(ReusableHandler, BaseInnerHandler):
         return main_handler.__call_choose_cathegory_handler(message)
 
     def switch_to_existing_handler(self, message: Message):
-        if self.state == __class__.State.OTHER:
-            return self.other_sh(message)
-        elif self.state == __class__.State.WAITING_FOR_OPTION:
-            return self.got_option_sh(message)
+        if self.state == __class__.State.WAITING_FOR_CATHEGORY:
+            return self.got_cathegory_sh(message)
+        elif self.state == __class__.State.WAITING_FOR_MONEY_AMOUNT:
+            return self.got_money_amount_sh(message)
+        elif self.state == __class__.State.WAITING_FOR_COMMENT:
+            return self.got_comment_sh(message)
 
-    def other_sh(self, message: Message):
-        return self.__call_choose_option_handler(message)
-
-    def got_option_sh(self, message: Message):
-        choosed_option = self.return_result[1]
-        if choosed_option == __class__.ChooseOptionConstrains.CREATE_CATHEGORY_OPTION:
-            return self.__call_create_cathegory_handler(message)
-        elif choosed_option == __class__.ChooseOptionConstrains.CHANGE_CATHEGORY_OPTION:
-            return self.__call_change_cathegory_handler(message)
-        elif choosed_option == __class__.ChooseOptionConstrains.DELETE_CATHEGORY_OPTION:
-            return self.__call_delete_cathegory_handler(message)
-        elif choosed_option == __class__.ChooseOptionConstrains.FINISH_OPTION:
+    def got_cathegory_sh(self, message: Message):
+        if not self.return_result:
             return self.outter_handler.switch_to_existing_handler(message)
-        assert False, "This can not be reached. Incorrect option handling?"
 
-    def load_data_from_database(self, message: Message):
-        self.income_cathegories, self.expense_cathegories = load_person_cathegories(
-            message.from_user.id
-        )
+        self.operation.cathegory_id = self.return_result[0].id
+        return self.__call_get_money_amount_handler(message)
+
+    def got_money_amount_sh(self, message: Message):
+        if not self.return_result:
+            return self.outter_handler.switch_to_existing_handler(message)
+        self.operation.money_amount = self.return_result
+        return self.__call_get_comment_handler(message)
+
+    def got_comment_sh(self, message: Message):
+        if not self.return_result:
+            return self.outter_handler.switch_to_existing_handler(message)
+        if self.return_result == __class__.GetCommentConstrains.EMPTY_COMMENT_OPTION:
+            self.operation.comment = ""
+        else:
+            self.operation.comment = self.return_result
+        if not self.operation.id:
+            self.operation.id = DatabaseApi().add_operation(self.operation)
+        return self.outter_handler.switch_to_existing_handler(message)
