@@ -79,6 +79,6 @@ class RollbackOperationHandler(ReturningResultHandler):
             return self.outter_handler.switch_to_existing_handler(message)
         choosed_option = self.return_result[1]
         if choosed_option == "Да":
-            DatabaseApi.rollback_operation(self.operation)
+            DatabaseApi().rollback_operation(self.operation.id)
             BotState().bot.send_message(message.chat.id, "Операция успешно отменена")
         return self.outter_handler.switch_to_existing_handler(message)
