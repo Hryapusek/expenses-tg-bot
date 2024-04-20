@@ -58,7 +58,7 @@ class ChooseOperationHandler(ReturningResultHandler, ReusableHandler):
             for triple in _generate_triples(len(self.operations)):
                 markup.add(*filter(None, triple))
             def is_valid(number: int):
-                return 1 <= number <= len(self.operations)
+                return (1 <= number <= len(self.operations), "Введенное число не входит в допустимый диапозон")
             return GetNumberHandler.switch_to_this_handler(message, self, asking_message, markup, is_valid)
         except:
             self.state = prev_state
@@ -66,9 +66,9 @@ class ChooseOperationHandler(ReturningResultHandler, ReusableHandler):
 
     def switch_to_existing_handler(self, message: Message) -> ReusableHandler:
         if self.state == self.State.WAITING_FOR_CATHEGORY:
-            return self.got_cathegory_sh(message, self.outter_handler)
+            return self.got_cathegory_sh(message)
         elif self.state == self.State.WAITING_FOR_OPERATION:
-            return self.got_operation_sh(message, self.outter_handler)
+            return self.got_operation_sh(message)
         assert False, "This should not be called. Silly mistake maybe made???"
 
     def got_cathegory_sh(self, message: Message):

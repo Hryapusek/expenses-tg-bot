@@ -69,8 +69,8 @@ class CreateOperationHandler(ReusableHandler, BaseInnerHandler):
             raise
 
     class GetCommentConstrains:
-        ASKING_MESSAGE = "Введите комментарий к операции или напишите 'нет' для отмены операции"
         EMPTY_COMMENT_OPTION = "нет"
+        ASKING_MESSAGE = f"Введите комментарий к операции или напишите '{EMPTY_COMMENT_OPTION}' для пустого комментария"
         MARKUP = ReplyKeyboardMarkup(
             resize_keyboard=True,
         )
@@ -84,7 +84,8 @@ class CreateOperationHandler(ReusableHandler, BaseInnerHandler):
                 message,
                 self,
                 __class__.GetCommentConstrains.ASKING_MESSAGE,
-                reply_markup=__class__.GetCommentConstrains.MARKUP,
+                markup=__class__.GetCommentConstrains.MARKUP,
+                add_cancel_button=False
             )
         except:
             self.state = prev_state

@@ -247,50 +247,28 @@ class DatabaseApi:
                     ),
                 )
                 operation_id = cursor.fetchone()[0]
-                # TODO: Add checking if cathegory_type has same type as operation_type
-                # e.g. cathegory 'income' and operation 'income'
-                # not the 'income' and 'expense'
-                # Maybe this checking is too much need to think about it
-                if operation.operation_type_id == self.get_income_operation_type_id():
+                if operation.operation_type_id == self.get_change_balance_operation_type_id():
                     cursor.execute(
                         "UPDATE cathegory SET current_money = current_money + %s "
                         "WHERE id = %s",
                         (operation.money_amount, operation.cathegory_id),
                     )
                     cathegory = self.get_cathegory_by_id(operation.cathegory_id, conn)
-                    if cathegory.cathegory_type_id == self.get_income_operation_type_id():
+                    if cathegory.cathegory_type_id == self.get_income_cathegory_type_id():
                         cursor.execute(
                             "UPDATE person SET balance = balance + %s " "WHERE id = %s",
                             (operation.money_amount, operation.person_id),
                         )
-                    else:
+                    elif cathegory.cathegory_type_id == self.get_expense_cathegory_type_id():
                         cursor.execute(
                             "UPDATE person SET balance = balance - %s " "WHERE id = %s",
                             (operation.money_amount, operation.person_id),
                         )
 
-                elif operation.operation_type_id == self.get_expense_operation_type_id():
-                    cursor.execute(
-                        "UPDATE cathegory SET current_money = current_money - %s "
-                        "WHERE id = %s",
-                        (operation.money_amount, operation.cathegory_id),
-                    )
-                    if cathegory.cathegory_type_id == self.get_income_operation_type_id():
-                        cursor.execute(
-                            "UPDATE person SET balance = balance - %s " "WHERE id = %s",
-                            (operation.money_amount, operation.person_id),
-                        )
                     else:
-                        cursor.execute(
-                            "UPDATE person SET balance = balance + %s " "WHERE id = %s",
-                            (operation.money_amount, operation.person_id),
-                        )
-
+                        assert False, "Unknown operation type found in add_operation!"
                 else:
-                    logging.warning(
-                        "Unknown operation type found in add_operation! Type id: %s",
-                        operation.operation_type_id,
-                    )
+                    assert False, "Unknown operation type found in add_operation!"
         finally:
             if need_to_commit:
                 conn.commit()
@@ -404,10 +382,10 @@ class DatabaseApi:
             operation: Operation = self.get_operation_by_id(operation_id, conn)
             cathegory: Cathegory = self.get_cathegory_by_id(operation.cathegory_id, conn)
             person: Person = self.get_person_by_id(operation.person_id, conn)
-            if operation.operation_type_id == self.get_income_operation_type_id():
+            if cathegory.cathegory_type_id == self.get_income_cathegory_type_id():
                 cathegory.current_money -= operation.money_amount
                 person.balance -= operation.money_amount
-            else:
+            elif cathegory.cathegory_type_id == self.get_expense_cathegory_type_id():
                 cathegory.current_money += operation.money_amount
                 person.balance += operation.money_amount
             self.delete_operation_by_id(operation_id, conn)
