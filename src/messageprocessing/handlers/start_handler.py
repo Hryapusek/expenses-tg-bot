@@ -3,9 +3,9 @@ from telebot.types import Message
 import telebot.types
 from database.api import DatabaseApi
 from psycopg2 import ProgrammingError
+from messageprocessing.handlers.mainmenuhandler.main_menu_handler import MainMenuHandler
 
 from messageprocessing.handlers.utils import InitializeWrapper
-from .main_menu_handler import MainMenuHandler
 from ..botstate import BotState
 from .create_user_handler import CreateUserHandler
 import logging
