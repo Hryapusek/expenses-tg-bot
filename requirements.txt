@@ -1,0 +1,4 @@
+telebot
+pyyaml
+singleton-decorator
+psycopg2-binary
