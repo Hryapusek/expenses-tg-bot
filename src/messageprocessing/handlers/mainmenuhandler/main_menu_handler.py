@@ -1,98 +1,101 @@
 from enum import Enum
 
 import telebot
+from database.api import DatabaseApi
+from database.types.person import Person
+from messageprocessing.botstate.bot_state import BotState
 from messageprocessing.handlers.base_handler import BaseHandler
 from telebot.types import Message
+from messageprocessing.handlers.base_inner_handler import BaseInnerHandler
+from messageprocessing.handlers.cathegorieshandler.manage_cathegories_handler import CathegoriesMainMenuHandler
+from messageprocessing.handlers.commonhandlers.choose_option_handler import ChooseOptionHandler
+from messageprocessing.handlers.operationshandler.manage_operations_handler import OperationsMainMenuHandler
 
-from src.database.types.cathegory import Cathegory
-from .base_inner_handler import BaseInnerHandler
-from ..cathegorieshandler.manage_cathegories_hanlder import CathegoriesMainMenuHandler
-from .commonhandlers.choose_option_handler import ChooseOptionHandler
-from ..botstate import BotState
+from database.types.cathegory import Cathegory
 
 
 class MainMenuHandler(BaseInnerHandler):
     class State(Enum):
         WAITING_FOR_OPTION = 0
         IN_CATHEGORIES_MAIN_MENU = 1
+        IN_OPERATIONS_MAIN_MENU = 2
+
+    def __init__(self, outter_handler=None):
+        BaseInnerHandler.__init__(self, None)
+        self.state = self.State.WAITING_FOR_OPTION
+
+    def handle_message(self, message) -> BaseHandler:
+        assert False, "This method is not implemented"
+        return self
+
+    def __call_manage_cathegories_handler(self, message: Message):
+        try:
+            prev_state = self.state
+            self.state = __class__.State.IN_CATHEGORIES_MAIN_MENU
+            return CathegoriesMainMenuHandler.switch_to_this_handler(message, self)
+        except:
+            self.state = prev_state
+            raise
+
+    def __call_manage_operations_handler(self, message: Message):
+        try:
+            prev_state = self.state
+            self.state = __class__.State.IN_OPERATIONS_MAIN_MENU
+            return OperationsMainMenuHandler.switch_to_this_handler(message, self)
+        except:
+            self.state = prev_state
+            raise
 
     class ChooseOptionConstrains:
         ASKING_MESSAGE = "Выберите действие"
 
         OPTIONS = [
             CHECK_CATHEGORIES_OPTION := "Категории",
-            CHANGE_CATHEGORY_OPTION := "Операции",
+            CHECK_OPERATIONS_OPTION := "Операции",
         ]
-
-    def __init__(self, outter_handler=None):
-        BaseInnerHandler.__init__(self, None)
-        self.state = self.State.WAITING_FOR_OPTION
-
-    MARKUP = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-    for i in ChooseOptionConstrains.OPTIONS:
-        MARKUP.add(i)
-    GREETING_MESSAGE = "Что вы хотите сделать?"
-
-    def __call_manage_cathegories_handler(self, message: Message):
-        try:
-            prev_state = self.state
-            self.state = __class__.State.State.IN_CATHEGORIES_MAIN_MENU
-            return CreateCathegoryHandler.switch_to_this_handler(message, self)
-        except:
-            self.state = prev_state
-            raise
-
-    def __call_change_cathegory_handler(self, message: Message):
-        try:
-            prev_state = self.state
-            self.state = __class__.State.OTHER
-            return ChangeCathegoryHandler.switch_to_this_handler(
-                message, self, self.income_cathegories, self.expense_cathegories
-            )
-        except:
-            self.state = prev_state
-            raise
-
-    def __call_delete_cathegory_handler(self, message: Message):
-        try:
-            prev_state = self.state
-            self.state = __class__.State.OTHER
-            return DeleteCathegoryHandler.switch_to_this_handler(
-                message, self, self.income_cathegories, self.expense_cathegories
-            )
-        except:
-            self.state = prev_state
-            raise
 
     def __call_choose_option_handler(self, message: Message):
         try:
             prev_state = self.state
+            person: Person = DatabaseApi().get_person_by_id(message.from_user.id)
+            GREETING_MESSAGE = (f"Рад снова вас видеть, {person.name}!\n"
+                                f"Ваш баланс: {person.balance}\n\n"
+                                )
             self.state = __class__.State.WAITING_FOR_OPTION
             return ChooseOptionHandler.switch_to_this_handler(
                 message,
                 self,
+                GREETING_MESSAGE + self.ChooseOptionConstrains.ASKING_MESSAGE,
+                self.ChooseOptionConstrains.OPTIONS,
+                add_cancel_option=False
             )
         except:
             self.state = prev_state
             raise
 
-    def __call_cathegories_handler(self, message):
-        
-
-    def handle_message(self, message: Message):
-        if message.text == self.ChooseOptionConstrains.CREATE_CATHEGORY_OPTION:
-            return self.__call_create_cathegory_handler(message)
-        elif message.text == self.ChooseOptionConstrains.CHANGE_CATHEGORY_OPTION:
-            return self.__call_change_cathegory_handler(message)
-        elif message.text == self.ChooseOptionConstrains.DELETE_CATHEGORY_OPTION:
-            return self.__call_delete_cathegory_handler(message)
-        return self
-
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler=None):
-        BotState().bot.send_message(message.chat.id, __class__.GREETING_MESSAGE, reply_markup=__class__.MARKUP)
-        return MainMenuHandler()
+        handler = __class__()
+        return handler.__call_choose_option_handler(message)
 
     def switch_to_existing_handler(self, message: Message):
-        self.switch_to_this_handler(message)
-        return self
+        if self.state == self.State.IN_CATHEGORIES_MAIN_MENU:
+            return self.finished_cathegories_sh(message)
+        elif self.state == self.State.IN_OPERATIONS_MAIN_MENU:
+            return self.finished_operations_sh(message)
+        elif self.state == self.State.WAITING_FOR_OPTION:
+            return self.got_option_sh(message)
+        assert False, "State is not defined"
+
+    def got_option_sh(self, message: Message):
+        if message.text == self.ChooseOptionConstrains.CHECK_CATHEGORIES_OPTION:
+            return self.__call_manage_cathegories_handler(message)
+        elif message.text == self.ChooseOptionConstrains.CHECK_OPERATIONS_OPTION:
+            return self.__call_manage_operations_handler(message)
+        assert False, "Option is not defined"
+
+    def finished_cathegories_sh(self, message: Message):
+        return self.__call_choose_option_handler(message)
+
+    def finished_operations_sh(self, message: Message):
+        return self.__call_choose_option_handler(message)
