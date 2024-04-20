@@ -9,6 +9,7 @@ from messageprocessing.handlers.commonhandlers.choose_option_handler import (
 from database.api import DatabaseApi
 from database.types.cathegory import Cathegory
 from messageprocessing.handlers.operationshandler.create_operation_handler import CreateOperationHandler
+from messageprocessing.handlers.operationshandler.history_of_operation_handler import HistoryOfOperationsHandler
 from messageprocessing.handlers.operationshandler.rollback_operation_handler import RollbackOperationHandler
 
 
@@ -65,6 +66,15 @@ class OperationsMainMenuHandler(ReusableHandler, BaseInnerHandler):
             prev_state = self.state
             self.state = __class__.State.OTHER
             return RollbackOperationHandler.switch_to_this_handler(message, self)
+        except:
+            self.state = prev_state
+            raise
+
+    def __call_operation_history_handler(self, message: Message):
+        try:
+            prev_state = self.state
+            self.state = __class__.State.OTHER
+            return HistoryOfOperationsHandler.switch_to_this_handler(message, self)
         except:
             self.state = prev_state
             raise
