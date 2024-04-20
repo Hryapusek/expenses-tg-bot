@@ -8,6 +8,8 @@ from messageprocessing.handlers.commonhandlers.choose_option_handler import (
 )
 from database.api import DatabaseApi
 from database.types.cathegory import Cathegory
+from messageprocessing.handlers.operationshandler.create_operation_handler import CreateOperationHandler
+from messageprocessing.handlers.operationshandler.rollback_operation_handler import RollbackOperationHandler
 
 
 class OperationsMainMenuHandler(ReusableHandler, BaseInnerHandler):
@@ -28,9 +30,9 @@ class OperationsMainMenuHandler(ReusableHandler, BaseInnerHandler):
         ASKING_MESSAGE = "Выберите действие"
 
         OPTIONS = [
-            CREATE_CATHEGORY_OPTION := "Добавить операцию",
-            CHANGE_CATHEGORY_OPTION := "Откатить операцию",
-            DELETE_CATHEGORY_OPTION := "Посмотреть историю",
+            CREATE_OPERATION_OPTION := "Добавить операцию",
+            ROLLBACK_OPERATION_OPTION := "Откатить операцию",
+            OPERATION_HISTORY_OPTION := "Посмотреть историю",
             FINISH_OPTION := "Завершить",
         ]
 
@@ -49,40 +51,27 @@ class OperationsMainMenuHandler(ReusableHandler, BaseInnerHandler):
             self.state = prev_state
             raise
 
-    def __call_create_cathegory_handler(self, message: Message):
+    def __call_create_operation_handler(self, message: Message):
         try:
             prev_state = self.state
             self.state = __class__.State.OTHER
-            return CreateCathegoryHandler.switch_to_this_handler(message, self)
+            return CreateOperationHandler.switch_to_this_handler(message, self)
         except:
             self.state = prev_state
             raise
 
-    def __call_change_cathegory_handler(self, message: Message):
+    def __call_rollback_operation_handler(self, message: Message):
         try:
             prev_state = self.state
             self.state = __class__.State.OTHER
-            return ChangeCathegoryHandler.switch_to_this_handler(
-                message, self, self.income_cathegories, self.expense_cathegories
-            )
-        except:
-            self.state = prev_state
-            raise
-
-    def __call_delete_cathegory_handler(self, message: Message):
-        try:
-            prev_state = self.state
-            self.state = __class__.State.OTHER
-            return DeleteCathegoryHandler.switch_to_this_handler(
-                message, self, self.income_cathegories, self.expense_cathegories
-            )
+            return RollbackOperationHandler.switch_to_this_handler(message, self)
         except:
             self.state = prev_state
             raise
 
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler: ReusableHandler):
-        main_handler = CathegoriesMainMenuHandler(outter_handler)
+        main_handler = __class__(outter_handler)
         return main_handler.__call_choose_option_handler(message)
 
     def switch_to_existing_handler(self, message: Message):
@@ -96,17 +85,12 @@ class OperationsMainMenuHandler(ReusableHandler, BaseInnerHandler):
 
     def got_option_sh(self, message: Message):
         choosed_option = self.return_result[1]
-        if choosed_option == __class__.ChooseOptionConstrains.CREATE_CATHEGORY_OPTION:
-            return self.__call_create_cathegory_handler(message)
-        elif choosed_option == __class__.ChooseOptionConstrains.CHANGE_CATHEGORY_OPTION:
-            return self.__call_change_cathegory_handler(message)
-        elif choosed_option == __class__.ChooseOptionConstrains.DELETE_CATHEGORY_OPTION:
-            return self.__call_delete_cathegory_handler(message)
+        if choosed_option == __class__.ChooseOptionConstrains.CREATE_OPERATION_OPTION:
+            return self.__call_create_operation_handler(message)
+        elif choosed_option == __class__.ChooseOptionConstrains.ROLLBACK_OPERATION_OPTION:
+            return self.__call_rollback_operation_handler(message)
+        elif choosed_option == __class__.ChooseOptionConstrains.OPERATION_HISTORY_OPTION:
+            return self.__call_operation_history_handler(message)
         elif choosed_option == __class__.ChooseOptionConstrains.FINISH_OPTION:
             return self.outter_handler.switch_to_existing_handler(message)
         assert False, "This can not be reached. Incorrect option handling?"
-
-    def load_data_from_database(self, message: Message):
-        self.income_cathegories, self.expense_cathegories = load_person_cathegories(
-            message.from_user.id
-        )
