@@ -23,7 +23,7 @@ from messageprocessing.handlers.operationshandler.create_operation_handler impor
 from messageprocessing.handlers.operationshandler.utils import operation_to_str
 
 
-class HistoryOperationHandler(ReturningResultHandler):
+class HistoryOfOperationsHandler(ReturningResultHandler):
 
     class State(Enum):
         WAITING_FOR_CATHEGORY = 0
@@ -61,7 +61,7 @@ class HistoryOperationHandler(ReturningResultHandler):
     @staticmethod
     def switch_to_this_handler(message: Message, outter_handler: ReusableHandler):
         main_handler = __class__(outter_handler)
-        return main_handler.__call_choose_operation_handler(message)
+        return main_handler.__call_choose_cathegory_handler(message)
 
     def switch_to_existing_handler(self, message: Message):
         if self.state == __class__.State.WAITING_FOR_CATHEGORY:
