@@ -1,4 +1,5 @@
 from database.types.cathegory import Cathegory
+from messageprocessing.botstate.bot_state import BotState
 from messageprocessing.handlers.base_handler import ReusableHandler
 from messageprocessing.handlers.commonhandlers.get_number_handler import GetNumberHandler
 from ..base_inner_handler import ReturningResultHandler
@@ -53,15 +54,16 @@ class ChooseCathegoryHandler(ReturningResultHandler, ReusableHandler):
         expense_cathegories: list[Cathegory],
     ):
         """
-        Notes:
-            Check cathegories for emptiness before calling!
-        
         return_result:
-            - None if canceled
+            - None if canceled or empty
             - (Cathegory, List, Index) otherwise
         """
         markup = ReplyKeyboardMarkup()
         n_cathegories = len(income_cathegories) + len(expense_cathegories)
+        if n_cathegories == 0:
+            outter_handler.return_result = None
+            BotState().bot.send_message(message.from_user.id, "Не найдена ни одна категория")
+            return outter_handler.switch_to_existing_handler(message)
         for buttons in _generate_triples(n_cathegories):
             markup.add(*(btn for btn in buttons if btn != None))
         handler = __class__(
