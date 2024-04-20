@@ -9,7 +9,7 @@ class Operation:
         operation_type_id=0,
         person_id=0,
         cathegory_id=0,
-        money_amout=0,
+        money_amount=0,
         comment="",
     ):
         self.id = id
@@ -17,7 +17,7 @@ class Operation:
         self.operation_type_id = operation_type_id
         self.person_id = person_id
         self.cathegory_id = cathegory_id
-        self.money_amout = money_amout
+        self.money_amount = money_amount
         self.comment = comment
 
     @staticmethod
@@ -28,7 +28,7 @@ class Operation:
             operation_type_id=data[2],
             person_id=data[3],
             cathegory_id=data[4],
-            money_amout=data[5],
+            money_amount=data[5],
             comment=data[6],
         )
         return operation
@@ -39,6 +39,6 @@ class Operation:
             and self.date == other.date
             and self.operation_type_id == other.operation_type_id
             and self.cathegory_id == other.cathegory_id
-            and self.money_amout == other.money_amout
+            and self.money_amount == other.money_amount
             and self.comment == other.comment
         )

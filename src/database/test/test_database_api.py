@@ -55,7 +55,7 @@ class DatabaseTest(unittest.TestCase):
         operation = Operation(operation_type_id=DatabaseApi().get_expense_operation_type_id(),
                               person_id=person1.id,
                               cathegory_id=cathegory.id,
-                              money_amout=money_amount,
+                              money_amount=money_amount,
                               comment='Amogus')
         DatabaseApi().add_operation(operation)
         fetched_person: Person = DatabaseApi().get_person_by_id(person1.id)
@@ -84,14 +84,14 @@ class DatabaseTest(unittest.TestCase):
         operation1 = Operation(operation_type_id=DatabaseApi().get_expense_operation_type_id(),
                               person_id=person1.id,
                               cathegory_id=cathegory.id,
-                              money_amout=1000,
+                              money_amount=1000,
                               comment='Amogus1')
         operation1.id = DatabaseApi().add_operation(operation1)
 
         operation2 = Operation(operation_type_id=DatabaseApi().get_expense_operation_type_id(),
                               person_id=person1.id,
                               cathegory_id=cathegory.id,
-                              money_amout=2000,
+                              money_amount=2000,
                               comment='Amogus2')
         operation2.id = DatabaseApi().add_operation(operation2)
         

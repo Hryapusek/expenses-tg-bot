@@ -17,7 +17,7 @@ CREATE TABLE operation_type (
   type_name TEXT NOT NULL
 );
 
-INSERT INTO operation_type(type_name) VALUES ('expense'), ('income');
+INSERT INTO operation_type(type_name) VALUES ('change_balance');
 
 CREATE TABLE cathegory (
   id BIGSERIAL PRIMARY KEY,
