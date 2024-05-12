@@ -17,10 +17,10 @@ class DatabaseApi:
             - ProgrammingError if no person found
             - OperationalError if connection establishing failed
         """
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT * FROM person WHERE id = %s", (person_id,))
@@ -30,7 +30,7 @@ class DatabaseApi:
                         "Person with id %s was not found" % (person_id,)
                     )
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
         return Person.fromTuple(result)
@@ -42,10 +42,10 @@ class DatabaseApi:
             - OperationalError if connection establishing failed
             - psycopg2.Error error while inserting person
         """
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute(
@@ -53,20 +53,20 @@ class DatabaseApi:
                     (person.id, person.name, person.cathegory_ids, person.balance),
                 )
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
 
     def remove_person_by_id(self, person_id, conn = None):
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute("DELETE FROM person WHERE id = %s", (person_id,))
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
 
@@ -108,10 +108,10 @@ class DatabaseApi:
             - OperationalError if connection establishing failed
             - psycopg2.Error for all other errors
         """
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute(
@@ -131,7 +131,7 @@ class DatabaseApi:
                     (inserted_cathegory_id, cathegory.person_id),
                 )
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
         return inserted_cathegory_id
@@ -143,10 +143,10 @@ class DatabaseApi:
             - OperationalError if connection establishing failed
             - psycopg2.Error for all other errors
         """
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute(
@@ -154,7 +154,7 @@ class DatabaseApi:
                     (person.name, person.cathegory_ids, person.balance, person.id),
                 )
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
 
@@ -165,10 +165,10 @@ class DatabaseApi:
             - OperationalError if connection establishing failed
             - psycopg2.Error for all other errors
         """
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute(
@@ -187,7 +187,7 @@ class DatabaseApi:
                     ),
                 )
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
 
@@ -199,10 +199,10 @@ class DatabaseApi:
             - ProgrammingError if no rows were found
             - psycopg2.Error for all other errors
         """
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT * FROM cathegory WHERE id = %s", (cathegory_id,))
@@ -212,7 +212,7 @@ class DatabaseApi:
                         "Cathergory with id %s was not found" % (cathegory_id,)
                     )
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
         return Cathegory.fromTuple(result)
@@ -228,10 +228,10 @@ class DatabaseApi:
             - OperationalError if connection establishing failed
             - psycopg2.Error for all other errors
         """
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute(
@@ -270,29 +270,29 @@ class DatabaseApi:
                 else:
                     assert False, "Unknown operation type found in add_operation!"
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
         return operation_id
 
     def truncate_table(self, table_name, conn = None):
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute('TRUNCATE TABLE "%s" CASCADE' % (table_name,))
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
 
     def remove_cathegory_by_id(self, cathegory_id, conn = None):
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute(
@@ -307,45 +307,45 @@ class DatabaseApi:
                     (cathegory_id, person_id),
                 )
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
 
     def get_person_all_cathegories_by_id(self, person_id: int, conn = None) -> list[Cathegory]:
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT * FROM cathegory WHERE person_id = %s", (person_id,))
                 result = [Cathegory.fromTuple(x) for x in cursor.fetchall()]
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
         return result
         
     def get_person_all_operations_by_ids(self, person_id: int, cathegory_id: int, conn = None) -> list[Operation]:
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT * FROM operation WHERE person_id = %s AND cathegory_id = %s", (person_id, cathegory_id))
                 result = [Operation.fromTuple(x) for x in cursor.fetchall()]
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
         return result
     
     def get_operation_by_id(self, operation_id: int, conn = None):
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT * FROM operation WHERE id = %s", (operation_id,))
@@ -355,29 +355,29 @@ class DatabaseApi:
                         "Operation with id %s was not found" % (operation_id,)
                     )
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
         return Operation.fromTuple(result)
 
     def delete_operation_by_id(self, operation_id: int, conn = None):
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             with conn.cursor() as cursor:
                 cursor.execute("DELETE FROM operation WHERE id = %s", (operation_id,))
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
 
     def rollback_operation(self, operation_id: int, conn = None):
-        need_to_commit = False
+        is_connection_local = False
         if conn is None:
             conn = DatabaseConnection.connection()
-            need_to_commit = True
+            is_connection_local = True
         try:
             operation: Operation = self.get_operation_by_id(operation_id, conn)
             cathegory: Cathegory = self.get_cathegory_by_id(operation.cathegory_id, conn)
@@ -392,7 +392,7 @@ class DatabaseApi:
             self.update_cathegory(cathegory, conn)
             self.update_person(person, conn)
         finally:
-            if need_to_commit:
+            if is_connection_local:
                 conn.commit()
                 conn.close()
 
