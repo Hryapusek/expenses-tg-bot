@@ -8,5 +8,4 @@ from telebot import TeleBot
 class BotState:
     
     def __init__(self, bot: TeleBot) -> None:
-        self.id_handler: Dict[int, BaseHandler] = {}
         self.bot = bot
