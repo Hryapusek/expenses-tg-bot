@@ -1,7 +1,6 @@
 import psycopg2
 from singleton_decorator import singleton
 from configreader import ConfigReader
-import threading
 import logging
 
 class DatabaseConnection:
@@ -10,8 +9,6 @@ class DatabaseConnection:
     -----
     DatabaseConnection.connection()
     """
-    connection_lock = threading.RLock()
-
     @staticmethod
     def connection():
         connection = psycopg2.connect(
@@ -21,5 +18,4 @@ class DatabaseConnection:
             host = ConfigReader().db_host,
             port = ConfigReader().db_port
         )
-        connection.autocommit = True
         return connection
