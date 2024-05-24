@@ -2,14 +2,13 @@ from singleton_decorator import singleton
 from telebot.types import Message
 from ..handlers.start_handler import StartHandler
 from ..handlers.base_handler import BaseHandler
-from typing import Dict
 
 
 @singleton
 class MessageRouter:
 
     def __init__(self) -> None:
-        self.id_handler: Dict[int, BaseHandler] = {}
+        self.id_handler: dict[int, BaseHandler] = {}
 
     def process_message(self, message: Message):
         # FIXME: add try except
